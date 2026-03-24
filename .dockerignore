@@ -1,0 +1,5 @@
+.env.development
+.env.production
+images
+target
+docker-compose

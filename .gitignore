@@ -1,0 +1,11 @@
+.idea
+.run
+.vscode
+.env.development
+.env.image-generation
+.DS_Store
+/config/production.toml
+/target
+.env.dev
+cres.txt
+images

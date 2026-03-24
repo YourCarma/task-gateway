@@ -1,0 +1,28 @@
+[server]
+address = "0.0.0.0:10001"
+llm_mode="openai"
+
+
+[llm_client.openai]
+address="https://api.openai.com/v1"
+api_key="sk-proj-"
+use_proxy=false
+proxy_address="ip:port"
+
+
+[llm_client.openrouter]
+address="https://openrouter.ai/api/v1"
+api_key="sk-or-v1-"
+use_proxy=false
+proxy_address="ip:port"
+
+[llm_client.xai]
+address="https://api.x.ai/v1"
+api_key="sk-or-v1-"
+use_proxy=false
+proxy_address="ip:port"
+
+[logger]
+level = "debug"
+use_loki = "false"
+address = "http://0.0.0.0:3110"

@@ -1,0 +1,17 @@
+services:
+  geek-metaverse-image-generation:
+    container_name: geek-metaverse-image-generation
+    # VAR 1: for builed image
+    image: geek-metaverse-image-generation:1.0.0
+
+    # VAR 2: for context building  
+    # build:
+    #   context: backend
+    #   dockerfile: ../Dockerfile
+    restart: always
+    volumes:
+     - '/mnt/sda/Development/DevDeployment/volumes/image-generation/images:/app/images'
+    ports:
+     - '10008:10008'
+    env_file:
+    - '.env.image-generation'
