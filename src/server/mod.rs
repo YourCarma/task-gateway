@@ -22,7 +22,6 @@ pub struct AppState
 }
 
 impl AppState
-
 {
     pub fn new(providers_config: LLMProviderConfig) -> Self {
         AppState {

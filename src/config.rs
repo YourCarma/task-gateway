@@ -1,5 +1,4 @@
-use crate::logger::LoggerConfig;
-use crate::modules::llm_provider::config::LLMProviderConfig;
+use crate::{logger::LoggerConfig, modules::broker::config::MessageBrokerConfig};
 use crate::server::config::ServerConfig;
 
 use config::{Config, ConfigError, Environment, File, FileFormat};
@@ -8,14 +7,14 @@ use dotenv::dotenv;
 use getset::Getters;
 use serde::Deserialize;
 
-const CONFIG_PREFIX: &str = "GEEK_METAVERSE_IMAGE_GENERATION";
-const SERVICE_RUN_MODE: &str = "GEEK_METAVERSE_IMAGE_GENERATION__RUN_MODE";
+const CONFIG_PREFIX: &str = "TASK_GATEWAY";
+const SERVICE_RUN_MODE: &str = "TASK_GATEWAY__RUN_MODE";
 const DEV_FILE_CONFIG_PATH: &str = "./config/development.toml";
 
 #[derive(Builder, Clone, Deserialize, Getters)]
 #[getset(get = "pub")]
 pub struct ServiceConfig {
-    llm_client: LLMProviderConfig,
+    llm_client: MessageBrokerConfig,
     server: ServerConfig,
     logger: LoggerConfig,
 }
@@ -31,7 +30,7 @@ impl ServiceConfig {
 
         let run_mode_env_name = format!(".env.{}", run_mode);
 
-        if dotenv::from_filename(".env.image-generation").is_ok() {
+        if dotenv::from_filename(".env.task-gateway").is_ok() {
             unimplemented!()
         } else {
             dotenv::from_filename(run_mode_env_name).ok();

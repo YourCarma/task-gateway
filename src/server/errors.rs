@@ -9,7 +9,7 @@ use serde::Serialize;
 use thiserror::Error;
 use utoipa::ToSchema;
 
-use crate::modules::llm_provider::errors::GenerationsErrors;
+use crate::modules::broker::errors::PublisherErrors;
 use crate::server::swagger::SwaggerExample;
 
 pub type ServerResult<T> = Result<T, ServerError>;
@@ -100,44 +100,12 @@ impl From<std::io::Error> for ServerError {
     }
 }
 
-impl From<GenerationsErrors> for ServerError {
-    fn from(err: GenerationsErrors) -> Self {
+impl From<PublisherErrors> for ServerError {
+    fn from(err: PublisherErrors) -> Self {
         tracing::error!("Error: {err}", err = err.to_string());
         match err {
-            GenerationsErrors::BadRequest(err) => ServerError::BadRequest(err.to_string()),
-            GenerationsErrors::DeserializeError(_err) => ServerError::DeserializeError(
-                "No image on response of model. Try again.".to_string(),
-            ),
-            GenerationsErrors::IOError(_err) => {
-                ServerError::IOError("File saving or sending error.".to_string())
-            }
-            GenerationsErrors::RequestError(_err) => {
-                ServerError::RequestError("Request Error".to_string())
-            }
-            GenerationsErrors::InvalidResponse(_err) => ServerError::InvalidResponse(
-                "Invalid Response from generate API. See the logs".to_string(),
-            ),
-            GenerationsErrors::ModelModerationError(_err) => ServerError::ModelModerationError(
-                "Model API is on moderation.Try another model".to_string(),
-            ),
-            GenerationsErrors::NoCredits(_err) => {
-                ServerError::NoCredits("You have not credits on API".to_string())
-            }
-            GenerationsErrors::RateLimited(_err) => {
-                ServerError::RateLimited("Too many requests for API".to_string())
-            }
-            GenerationsErrors::ServiceUnavailable(_err) => {
-                ServerError::ServiceUnavailable("Model provider is unavailable".to_string())
-            }
-            GenerationsErrors::Timeout(_err) => {
-                ServerError::Timeout("API request to model timeout".to_string())
-            }
-            GenerationsErrors::Unauthorized(_err) => {
-                ServerError::Unauthorized("Unauthorized to API".to_string())
-            }
-            GenerationsErrors::AnotherError(_err) => {
-                ServerError::InternalError("Internal server error".to_string())
-            }
+            PublisherErrors::BadRequest(err) => ServerError::BadRequest(err.to_string()),
+           
         }
     }
 }

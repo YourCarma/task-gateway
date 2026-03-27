@@ -1,42 +1,39 @@
 [package]
-name = "geek-metaverse-image-generation"
+name = "task-gateway"
 version = "1.0.0"
 edition = "2024"
 
 [dependencies]
 async-trait = "0.1.89"
-anyhow = "1.0.100"
-config = "0.15.18"
+anyhow = "1.0.102"
+config = "0.15.22"
 derive_builder = "0.20.2"
 dotenv = "0.15.0"
-metrics-exporter-prometheus = "0.17.2"
-axum-prometheus = "0.9.0"
-axum-tracing-opentelemetry = "0.32.2"
-thiserror = "2.0.17"
+metrics-exporter-prometheus = "0.18.1"
+axum-prometheus = "0.10.0"
+axum-tracing-opentelemetry = "0.33.1"
+thiserror = "2.0.18"
 serde_json = "1.0.145"
 getset = "0.1.6"
 tracing = "0.1"
 serde_derive = "1.0.228"
 regex = "1.12.2"
 tracing-loki = "0.2.6"
-tracing-subscriber = "0.3.20"
+tracing-subscriber = "0.3.23"
 console-subscriber = "0.5.0"
 base64 = "0.22.1"
-tokio-util = "0.7.17"
+tokio-util = "0.7.18"
 retry = "2.0"
 rstest = "0.26.1"
-serial_test = "3.3.1"
-
-[dependencies.async-openai]
-version = "0.32.2"
-features = ["full"]
+serial_test = "3.4.0"
+lapin = "4.3.0"
 
 [dependencies.chrono]
-version = "0.4.42"
+version = "0.4.44"
 features = ["serde"]
 
 [dependencies.tokio]
-version = "1.45.1"
+version = "1.50.0"
 features = ["full"]
 
 [dependencies.tower-http]
@@ -56,7 +53,7 @@ version = "9"
 features = ["axum"] 
 
 [dependencies.uuid]
-version = "1.18.1"
+version = "1.22.0"
 features = [
     "v4", 
     "serde"
@@ -71,7 +68,7 @@ version = "0.8.6"
 features = ["multipart"]
 
 [dependencies.reqwest]
-version = "0.12.24"
+version = "0.13.2"
 features = ["json", "socks"] 
 
 

@@ -4,7 +4,7 @@ use tracing_loki::url::Url;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
-const LOKI_SERVICE_NAME: &str = "geek-metaverse-image-generation";
+const LOKI_SERVICE_NAME: &str = "task-gateway";
 
 #[derive(Clone, Deserialize, Getters)]
 #[getset(get = "pub")]
