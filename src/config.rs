@@ -14,7 +14,7 @@ const DEV_FILE_CONFIG_PATH: &str = "./config/development.toml";
 #[derive(Builder, Clone, Deserialize, Getters)]
 #[getset(get = "pub")]
 pub struct ServiceConfig {
-    llm_client: MessageBrokerConfig,
+    broker: MessageBrokerConfig,
     server: ServerConfig,
     logger: LoggerConfig,
 }

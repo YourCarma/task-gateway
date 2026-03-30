@@ -8,3 +8,4 @@ pub mod broker;
 pub trait BrokerProducer {
     async fn publish(&self, payload: PublishMessage) -> BrokerResult<String>;
 }
+

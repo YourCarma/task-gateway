@@ -14,23 +14,29 @@ use swagger::ApiDoc;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
-use crate::modules::llm_provider::config::LLMProviderConfig;
+use crate::modules::BrokerProducer;
 
-pub struct AppState
+pub struct AppState<B>
+where 
+    B: BrokerProducer
 {
-    providers_config: LLMProviderConfig,
+    broker: Arc<B>,
 }
 
-impl AppState
+impl<B> AppState<B>
+where 
+    B: BrokerProducer
 {
-    pub fn new(providers_config: LLMProviderConfig) -> Self {
+    pub fn new(broker: Arc<B>) -> Self {
         AppState {
-            providers_config,
+            broker,
         }
     }
 }
 
-pub fn init_server(app: AppState) -> Router
+pub fn init_server<B>(app: AppState<B>) -> Router
+where
+    B: BrokerProducer + Send + Sync + 'static,
 {
     let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
 
@@ -39,16 +45,8 @@ pub fn init_server(app: AppState) -> Router
         .merge(SwaggerUi::new("/docs").url("/api-docs/openapi.json", ApiDoc::openapi()))
         .route("/", get(Html("<a href=\"/docs\">ДОКУМЕНТАЦИЯ</h1>")))
         .route(
-            "/api/v1/images/generate/file",
-            post(router::llm_provider::image_generation::generate_image_to_file),
-        )
-        .route(
-            "/api/v1/images/generate/url",
-            post(router::llm_provider::image_generation::generate_image_to_url),
-        )
-        .route(
-            "/api/v1/images/edit/file",
-            post(router::llm_provider::image_editing::edit_images_to_file),
+            "/api/v1/broker/publish",
+            post(router::broker::publish_message::publish_message),
         )
         .layer(DefaultBodyLimit::max(100 * 1024 * 1024))
         .route("/metrics", get(|| async move { metric_handle.render() }))

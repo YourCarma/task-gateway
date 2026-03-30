@@ -11,7 +11,7 @@ use crate::modules::broker::errors::PublisherErrors;
 
 pub struct RabbitMQProducer {
     options: Arc<MessageBrokerConfig>,
-    channel: Arc<Channel>,
+    connection: Arc<Connection>,
 }
 
 #[async_trait::async_trait]
@@ -26,11 +26,10 @@ impl ServiceConnect for RabbitMQProducer {
 
         let conn_props = ConnectionProperties::default();
         let connection = Connection::connect(config.address(), conn_props).await?;
-        let channel = connection.create_channel().await?;
         tracing::info!(address=?address, "Connection to RabbitMQ Address: {address}");
         Ok(RabbitMQProducer {
             options: Arc::new(config.to_owned()),
-            channel: Arc::new(channel.to_owned()),
+            connection: Arc::new(connection),
         })
     }
 }

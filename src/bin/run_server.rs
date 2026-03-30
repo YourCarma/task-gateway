@@ -1,25 +1,29 @@
+use std::sync::Arc;
+
 use axum_tracing_opentelemetry::middleware::OtelAxumLayer;
+use task_gateway::modules::broker::rabbitmq::RabbitMQProducer;
 use tokio::net::TcpListener;
 use tower_http::{cors, trace};
 
-use geek_metaverse_image_generation::config::ServiceConfig;
-use geek_metaverse_image_generation::logger;
-use geek_metaverse_image_generation::server::AppState;
+use task_gateway::config::ServiceConfig;
+use task_gateway::{ServiceConnect, logger};
+use task_gateway::server::AppState;
 
 #[tokio::main(worker_threads = 8)]
 async fn main() -> anyhow::Result<()> {
     let config = ServiceConfig::new()?;
     logger::init_logger(config.logger())?;
 
-    let llm_openai_config = config.llm_client();
-    let server_app = AppState::new(llm_openai_config.to_owned());
+    let broker_config = config.broker();
+    let broker = Arc::new(RabbitMQProducer::connect(broker_config).await?);
+    let server_app = AppState::new(broker);
 
     let cors_layer = cors::CorsLayer::permissive();
     let trace_layer = trace::TraceLayer::new_for_http()
         .make_span_with(trace::DefaultMakeSpan::new().level(tracing::Level::INFO))
         .on_response(trace::DefaultOnResponse::new().level(tracing::Level::INFO));
 
-    let app = geek_metaverse_image_generation::server::init_server(server_app)
+    let app = task_gateway::server::init_server(server_app)
         .layer(trace_layer)
         .layer(cors_layer)
         .layer(OtelAxumLayer::default());

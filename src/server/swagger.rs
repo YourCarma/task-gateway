@@ -1,38 +1,32 @@
 use crate::errors::*;
-use crate::server::router::llm_provider::image_editing::*;
-use crate::server::router::llm_provider::image_generation::*;
-use crate::server::router::models::GenerationTaskCreate;
+use crate::server::router::broker::publish_message::*;
+use crate::server::router::models::{MessageRequest, MessageResponse};
 use utoipa::OpenApi;
 
 #[derive(OpenApi)]
 #[openapi(
     info(
-        title="GeekMetaverse Image Generation Service",
+        title="Task Gateway (Bus) service",
         version="1.1.0",
-        description = "Service for generate images by LLM"
+        description = "Service implementing Broker Bus pattern"
     ),
     tags(
         (
-            name = "Generate Images",
-            description = "Generate images by LLM",
-        ),
-        (
-            name = "Edit Images",
-            description = "Edit images by LLM",
+            name = "Broker",
+            description = "",
         ),
     ),
 
     components(
         schemas(
-            GenerationTaskCreate,
+            MessageRequest,
+            MessageResponse,
             Successful,
             ErrorResponse,
         ),
     ),
     paths(
-       generate_image_to_file,
-       generate_image_to_url,
-       edit_images_to_file,
+       publish_message,
     )
 )]
 pub(super) struct ApiDoc;

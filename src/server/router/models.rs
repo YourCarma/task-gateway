@@ -1,31 +1,37 @@
 use getset::{CopyGetters, Getters};
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use utoipa::ToSchema;
 
-use crate::modules::llm_provider::models::{
-    generation_models::GenerateModels, image_generation::GenerateTask,
-};
+use crate::modules::broker::models::{PublishMessage, TaskType};
 
-#[derive(Serialize, Deserialize, Getters, ToSchema)]
+#[derive(Serialize, Deserialize,Getters, Debug, Clone, PartialEq, ToSchema)]
 #[getset(get = "pub")]
-pub struct GenerationTaskCreate {
-    #[serde(flatten)]
-    image_generate_task: GenerateTask,
+pub struct MessageRequest{
+    #[schema(default="12345")]
+    user_id: String,
+    #[schema(default="images.generate")]
+    task_type: TaskType,
+    #[schema(default = r#"{
+        "model": "openrouter::google/gemini-3.1-flash-image-preview"
+        "prompt": "post-apocalyptic warrior standing in a ruined city, dramatic lighting, jojo style",
+        "user_id": 21233,
+        "image_name": "Clown"
+    }"#)]
+    payload: Value
 }
 
-#[derive(Serialize, Deserialize, Getters, ToSchema, CopyGetters)]
+#[derive(Serialize, Deserialize,Getters, Debug, Clone, PartialEq, ToSchema)]
 #[getset(get = "pub")]
-pub struct EditingTaskCreate {
-    #[schema(default = "Картинка с клоуном")]
-    image_name: String,
-    #[schema(default = "Добавь клоуна рядом!")]
-    prompt: String,
-    #[schema(default = "122333")]
-    user_id: Option<i64>,
-    #[schema(default = "dnd")]
-    universe: Option<String>,
-    #[schema(default = "openai/gpt-5-image-mini")]
-    model: GenerateModels,
-    #[schema(format = Binary)]
-    images: Vec<String>,
+pub struct MessageResponse{
+   #[schema(default="user_id:service_name:task_uuid")] 
+   task_key: String
 }
+
+impl MessageResponse {
+    pub fn new(task_key: String) -> Self{
+        Self { task_key }
+    }
+}
+
+

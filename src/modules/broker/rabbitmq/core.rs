@@ -10,32 +10,34 @@ use crate::modules::broker::models::{BrokerResult, PublishMessage};
 #[async_trait::async_trait]
 impl BrokerProducer for RabbitMQProducer {
     async fn publish(&self, payload: PublishMessage) -> BrokerResult<String> {
+        tracing::debug!("Creating channel...");
+        let channel = self.connection.create_channel().await?;
         let bytes = serde_json::to_vec(&payload)?;
         let pub_opts = BasicPublishOptions {
             mandatory: true,
             immediate: false,
         };
-        let task_id = Uuid::new_v4();
+        let task_id: &Uuid = payload.task_id();
         let user_id = payload.user_id().to_owned();
 
         let task_type = payload.task_type().to_owned();
-        let routing = serde_json::to_string(&task_type)?;
+        let routing = task_type.to_string();
         let exchange = task_type.exchange();
 
-        let formalized_exchange = serde_json::to_string(&exchange)?;
-        let confirm = self
-                                    .channel
+        let confirm = channel
                                     .basic_publish(
-                                        formalized_exchange.clone().into(),
+                                        exchange.to_string().into(),
                                         routing.clone().into(),
                                         pub_opts,
                                         bytes.as_slice(),
                                         BasicProperties::default(),
                                     )
-                                    .await?
-                                    .await?;
+                                    .await?.await?;
+                                    
+                                    
+        
         tracing::info!(
-            exchange=formalized_exchange,
+            exchange=task_type.to_string(),
             routing=routing,
             confirm=?confirm,
             "Rabbit confirmed:"
