@@ -1,11 +1,12 @@
-use lapin::BasicProperties;
-use lapin::options::BasicPublishOptions;
+use lapin::options::{BasicPublishOptions, ConfirmSelectOptions, ExchangeDeclareOptions};
+use lapin::types::FieldTable;
+use lapin::{BasicProperties, Confirmation, ExchangeKind};
 use uuid::Uuid;
 
 use crate::modules::BrokerProducer;
-use crate::modules::broker::rabbitmq::RabbitMQProducer;
+use crate::modules::broker::errors::PublisherErrors;
 use crate::modules::broker::models::{BrokerResult, PublishMessage};
-
+use crate::modules::broker::rabbitmq::RabbitMQProducer;
 
 #[async_trait::async_trait]
 impl BrokerProducer for RabbitMQProducer {
@@ -24,26 +25,68 @@ impl BrokerProducer for RabbitMQProducer {
         let routing = task_type.to_string();
         let exchange = task_type.exchange();
 
+        channel
+            .exchange_declare(
+                exchange.to_string().into(),
+                ExchangeKind::Direct,
+                ExchangeDeclareOptions {
+                    passive: true,
+                    ..Default::default()
+                },
+                FieldTable::default(),
+            )
+            .await?;
+
+        channel
+            .confirm_select(ConfirmSelectOptions::default())
+            .await?;
+
         let confirm = channel
-                                    .basic_publish(
-                                        exchange.to_string().into(),
-                                        routing.clone().into(),
-                                        pub_opts,
-                                        bytes.as_slice(),
-                                        BasicProperties::default(),
-                                    )
-                                    .await?.await?;
-                                    
-                                    
-        
+            .basic_publish(
+                exchange.to_string().into(),
+                routing.clone().into(),
+                pub_opts,
+                bytes.as_slice(),
+                BasicProperties::default(),
+            )
+            .await?
+            .await?;
+
+        match confirm {
+            Confirmation::Ack(None) => {}
+            Confirmation::Ack(Some(returned)) => {
+                return Err(PublisherErrors::NotFoundError(format!(
+                    "RabbitMQ returned unroutable message: {} {}, exchange={}, routing_key={}",
+                    returned.reply_code,
+                    returned.reply_text,
+                    returned.delivery.exchange,
+                    returned.delivery.routing_key,
+                )));
+            }
+            Confirmation::Nack(returned) => {
+                return Err(PublisherErrors::AnotherError(format!(
+                    "RabbitMQ nacked publish: {:?}",
+                    returned,
+                )));
+            }
+            Confirmation::NotRequested => {
+                return Err(PublisherErrors::AnotherError(
+                    "RabbitMQ publisher confirms are not enabled".to_string(),
+                ));
+            }
+        }
+
         tracing::info!(
-            exchange=task_type.to_string(),
-            routing=routing,
-            confirm=?confirm,
+            exchange = task_type.to_string(),
+            routing = routing,
             "Rabbit confirmed:"
         );
-        let task_key = format!("{}:{}:{}", user_id, exchange.to_service_name(), task_id.to_string());
+        let task_key = format!(
+            "{}:{}:{}",
+            user_id,
+            exchange.to_service_name(),
+            task_id.to_string()
+        );
         Ok(task_key)
     }
 }
-
