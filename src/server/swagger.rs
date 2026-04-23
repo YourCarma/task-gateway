@@ -12,8 +12,8 @@ use utoipa::OpenApi;
     ),
     tags(
         (
-            name = "Broker",
-            description = "",
+            name = "Publish",
+            description = "Publish message to broker",
         ),
     ),
 
