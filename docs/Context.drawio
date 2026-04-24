@@ -1,0 +1,55 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36">
+  <diagram name="Страница-1" id="-CnQtWof6Mcz4_5vhi2o">
+    <mxGraphModel dx="1178" dy="668" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="wRQMMKr8x4vG7x447u2--2" parent="1" style="verticalLabelPosition=bottom;sketch=0;aspect=fixed;html=1;verticalAlign=top;strokeColor=none;align=center;outlineConnect=0;shape=mxgraph.citrix.dhcp_server;" value="Third Party Service&lt;div&gt;&lt;br&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="50.67" x="110" y="332" as="geometry" />
+        </mxCell>
+        <mxCell id="wRQMMKr8x4vG7x447u2--30" edge="1" parent="1" source="wRQMMKr8x4vG7x447u2--3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="wRQMMKr8x4vG7x447u2--4" value="POST REST API JSON&lt;div&gt;user_id: str&lt;/div&gt;&lt;div&gt;task_type: str&lt;/div&gt;&lt;div&gt;payload: json&lt;/div&gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="wRQMMKr8x4vG7x447u2--3" parent="1" style="verticalLabelPosition=bottom;sketch=0;aspect=fixed;html=1;verticalAlign=top;strokeColor=none;align=center;outlineConnect=0;shape=mxgraph.citrix.thin_client;" value="Client" vertex="1">
+          <mxGeometry height="60" width="60" x="180" y="332" as="geometry" />
+        </mxCell>
+        <mxCell id="wRQMMKr8x4vG7x447u2--4" parent="1" style="verticalLabelPosition=bottom;sketch=0;aspect=fixed;html=1;verticalAlign=top;strokeColor=none;align=center;outlineConnect=0;shape=mxgraph.citrix.user_control;" value="Task-Gateway Service" vertex="1">
+          <mxGeometry height="84" width="103" x="400" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="wRQMMKr8x4vG7x447u2--40" edge="1" parent="1" source="wRQMMKr8x4vG7x447u2--4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=2.7;entryDy=0;entryPerimeter=0;" target="wRQMMKr8x4vG7x447u2--35" value="AMPQ">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="wRQMMKr8x4vG7x447u2--41" connectable="0" parent="1" style="group" value="" vertex="1">
+          <mxGeometry height="230" width="120" x="600" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="wRQMMKr8x4vG7x447u2--35" parent="wRQMMKr8x4vG7x447u2--41" style="strokeWidth=2;strokeColor=#000000;dashed=0;align=center;html=1;fontSize=12;shape=mxgraph.eip.messageChannel;fontStyle=1" value="BROKER" vertex="1">
+          <mxGeometry height="20" width="120" y="62" as="geometry" />
+        </mxCell>
+        <mxCell id="wRQMMKr8x4vG7x447u2--36" edge="1" parent="wRQMMKr8x4vG7x447u2--41" style="edgeStyle=elbowEdgeStyle;strokeWidth=2;rounded=0;endArrow=block;startArrow=block;startSize=10;endSize=10;dashed=0;html=1;strokeColor=#808080;" target="wRQMMKr8x4vG7x447u2--35" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="60" y="140" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="wRQMMKr8x4vG7x447u2--37" edge="1" parent="wRQMMKr8x4vG7x447u2--41" style="edgeStyle=elbowEdgeStyle;strokeWidth=2;rounded=0;endArrow=block;startArrow=block;startSize=10;endSize=10;dashed=0;html=1;strokeColor=#808080;" target="wRQMMKr8x4vG7x447u2--35" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="20" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="wRQMMKr8x4vG7x447u2--39" edge="1" parent="wRQMMKr8x4vG7x447u2--41" style="edgeStyle=elbowEdgeStyle;strokeWidth=2;rounded=0;endArrow=block;startArrow=block;startSize=10;endSize=10;dashed=0;html=1;strokeColor=#808080;" target="wRQMMKr8x4vG7x447u2--35" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="100" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="wRQMMKr8x4vG7x447u2--45" parent="wRQMMKr8x4vG7x447u2--41" style="verticalLabelPosition=bottom;sketch=0;aspect=fixed;html=1;verticalAlign=top;strokeColor=none;align=center;outlineConnect=0;shape=mxgraph.citrix.desktop_web;" value="Service&lt;div&gt;&lt;br&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="90" width="76.5" x="30" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="wRQMMKr8x4vG7x447u2--43" parent="1" style="verticalLabelPosition=bottom;sketch=0;aspect=fixed;html=1;verticalAlign=top;strokeColor=none;align=center;outlineConnect=0;shape=mxgraph.citrix.directory_server;" value="Service" vertex="1">
+          <mxGeometry height="88.5" width="65" x="590" y="202" as="geometry" />
+        </mxCell>
+        <mxCell id="wRQMMKr8x4vG7x447u2--44" parent="1" style="verticalLabelPosition=bottom;sketch=0;aspect=fixed;html=1;verticalAlign=top;strokeColor=none;align=center;outlineConnect=0;shape=mxgraph.citrix.dns_server;" value="" vertex="1">
+          <mxGeometry height="92.5" width="76.5" x="670" y="202" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
