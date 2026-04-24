@@ -1,0 +1,108 @@
+{
+  "users": [
+    {
+      "name": "guest",
+      "password": "guest",
+      "tags": [
+        "administrator"
+      ]
+    }
+  ],
+  "vhosts": [
+    {
+      "name": "/",
+      "description": "Default virtual host",
+      "metadata": {
+        "description": "Default virtual host",
+        "tags": [],
+        "default_queue_type": "classic"
+      },
+      "tags": [],
+      "default_queue_type": "classic"
+    }
+  ],
+  "permissions": [
+    {
+      "user": "guest",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "queues": [
+    {
+      "name": "images.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    },
+    {
+      "name": "videos.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-queue-type": "classic"
+      }
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "images.tasks",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "videos.tasks",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "bindings": [
+    {
+      "source": "images.tasks",
+      "vhost": "/",
+      "destination": "images.queue",
+      "destination_type": "queue",
+      "routing_key": "images.generate",
+      "arguments": {}
+    },
+    {
+      "source": "images.tasks",
+      "vhost": "/",
+      "destination": "images.queue",
+      "destination_type": "queue",
+      "routing_key": "images.edit",
+      "arguments": {}
+    },
+    {
+      "source": "videos.tasks",
+      "vhost": "/",
+      "destination": "videos.queue",
+      "destination_type": "queue",
+      "routing_key": "videos.generate",
+      "arguments": {}
+    },
+    {
+      "source": "videos.tasks",
+      "vhost": "/",
+      "destination": "videos.queue",
+      "destination_type": "queue",
+      "routing_key": "videos.animate",
+      "arguments": {}
+    }
+  ]
+}
+

@@ -1,17 +1,40 @@
 services:
-  geek-metaverse-image-generation:
-    container_name: geek-metaverse-image-generation
+  task-gateway:
+    container_name: task-gateway
     # VAR 1: for builed image
-    image: geek-metaverse-image-generation:1.0.0
+    image: ghcr.io/yourcarma/task-gateway:latest
 
     # VAR 2: for context building  
     # build:
     #   context: backend
     #   dockerfile: ../Dockerfile
+    networks:
+      - app-net
     restart: always
-    volumes:
-     - '/mnt/sda/Development/DevDeployment/volumes/image-generation/images:/app/images'
     ports:
-     - '10008:10008'
+     - '10010:10010'
     env_file:
-    - '.env.image-generation'
+    - '.env.task-gateway'
+  
+  rabbitmq:
+    image: rabbitmq:management
+    restart: on-failure
+    networks:
+      - app-net
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    volumes:
+      - './rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro'
+      - './rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro'
+      - './rabbitmq/data:/var/lib/rabbitmq'
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '3'
+          memory: '6G'
