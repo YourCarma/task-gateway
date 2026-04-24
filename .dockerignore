@@ -3,3 +3,8 @@
 images
 target
 docker-compose
+tests
+.codex
+Dockerfile
+docker-compose
+.gitignore
