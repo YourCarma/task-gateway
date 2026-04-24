@@ -7,12 +7,12 @@ use utoipa::OpenApi;
 #[openapi(
     info(
         title="Task Gateway (Bus) service",
-        version="1.1.0",
+        version="1.0.0",
         description = "Service implementing Broker Bus pattern"
     ),
     tags(
         (
-            name = "Publish",
+            name = "Publisher",
             description = "Publish message to broker",
         ),
     ),

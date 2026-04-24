@@ -15,13 +15,24 @@ use crate::server::router::models::{MessageRequest, MessageResponse};
     post,
     path = "/api/v1/broker/publish",
     request_body = MessageRequest,
-    tags = ["PublishMessage"],
+    tags = ["Publisher"],
     description = r#"
+## Publish message to broker
+
+Arguments `BODY`:
+* user_id: `str` - User ID of publishing message
+* task_type: `str` - Type of task by service. One of:
+    * `images.generate` - Generate Task for *Image Generation Service*
+    * `images.edit` - Edit Task *Image Generation Service*
+    * `videos.generate` - Generate Task for *Videos Generation Service*
+    * `videos.animate` - Animate Task for *Videos Generation Service*
+* payload: `json` - JSON payload for target service
 
 "#,
     responses(
         (status = 200, description="Message has been published to Broker", body=MessageResponse),
-        (status = 500, description="Internal Server error", body=ErrorResponse)
+        (status = 500, description="Internal Server error", body=ErrorResponse),
+        (status = 503, description="Broker Unavailable", body=ErrorResponse)
     )
 )]
 pub async fn publish_message<B>(

@@ -47,7 +47,7 @@ impl BrokerProducer for RabbitMQProducer {
                 routing.clone().into(),
                 pub_opts,
                 bytes.as_slice(),
-                BasicProperties::default(),
+                BasicProperties::default().with_delivery_mode(2),
             )
             .await?
             .await?;
