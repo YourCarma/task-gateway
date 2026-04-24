@@ -9,6 +9,7 @@ use crate::modules::broker::config::MessageBrokerConfig;
 use crate::modules::broker::errors::PublisherErrors;
 
 pub struct RabbitMQProducer {
+    #[allow(dead_code)]
     options: Arc<MessageBrokerConfig>,
     connection: Arc<Connection>,
 }
