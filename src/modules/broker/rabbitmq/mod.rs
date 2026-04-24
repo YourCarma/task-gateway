@@ -2,7 +2,7 @@ pub mod core;
 pub mod errors;
 use std::sync::Arc;
 
-use lapin::{Channel, Connection, ConnectionProperties};
+use lapin::{Connection, ConnectionProperties};
 
 use crate::ServiceConnect;
 use crate::modules::broker::config::MessageBrokerConfig;

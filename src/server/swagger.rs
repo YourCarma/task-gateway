@@ -45,12 +45,3 @@ impl SwaggerExample for Successful {
         Successful::new(200, msg)
     }
 }
-
-impl SwaggerExample for ErrorResponse {
-    type Example = Self;
-
-    fn example(value: Option<&str>) -> Self::Example {
-        let msg = value.unwrap_or("bad client request");
-        ErrorResponse::new(400, "Bad request", msg)
-    }
-}
