@@ -81,12 +81,7 @@ impl BrokerProducer for RabbitMQProducer {
             routing = routing,
             "Rabbit confirmed:"
         );
-        let task_key = format!(
-            "{}:{}:{}",
-            user_id,
-            exchange.to_service_name(),
-            task_id
-        );
+        let task_key = format!("{}:{}:{}", user_id, exchange.to_service_name(), task_id);
         Ok(task_key)
     }
 }

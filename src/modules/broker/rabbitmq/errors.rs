@@ -8,9 +8,7 @@ impl From<RabbitMQError> for PublisherErrors {
             ErrorKind::AuthProviderError(error) => {
                 Self::Unauthorized(format!("Unauthorized to RabbitMQ: {}", error))
             }
-            ErrorKind::IOError(_error) => {
-                Self::IOError(format!("IO Error to RMQ: {}", err))
-            }
+            ErrorKind::IOError(_error) => Self::IOError(format!("IO Error to RMQ: {}", err)),
             ErrorKind::InvalidConnectionState(_error) => {
                 Self::ServiceUnavailable(format!("RMQ unavailable: {}", err))
             }

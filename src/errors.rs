@@ -4,7 +4,6 @@ use utoipa::ToSchema;
 
 use crate::server::errors::ServerError;
 
-
 impl From<serde_json::Error> for ServerError {
     fn from(err: serde_json::Error) -> Self {
         tracing::error!("serde error: {err:#?}");
