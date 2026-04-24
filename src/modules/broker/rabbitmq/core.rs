@@ -85,7 +85,7 @@ impl BrokerProducer for RabbitMQProducer {
             "{}:{}:{}",
             user_id,
             exchange.to_service_name(),
-            task_id.to_string()
+            task_id
         );
         Ok(task_key)
     }

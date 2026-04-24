@@ -6,15 +6,15 @@ impl From<RabbitMQError> for PublisherErrors {
     fn from(err: RabbitMQError) -> Self {
         match err.kind() {
             ErrorKind::AuthProviderError(error) => {
-                Self::Unauthorized(format!("Unauthorized to RabbitMQ: {}", error.to_string()))
+                Self::Unauthorized(format!("Unauthorized to RabbitMQ: {}", error))
             }
-            ErrorKind::IOError(error) => {
-                Self::IOError(format!("IO Error to RMQ: {}", err.to_string()))
+            ErrorKind::IOError(_error) => {
+                Self::IOError(format!("IO Error to RMQ: {}", err))
             }
-            ErrorKind::InvalidConnectionState(error) => {
-                Self::ServiceUnavailable(format!("RMQ unavailable: {}", err.to_string()))
+            ErrorKind::InvalidConnectionState(_error) => {
+                Self::ServiceUnavailable(format!("RMQ unavailable: {}", err))
             }
-            _ => Self::AnotherError(format!("Another Error: {}", err.to_string())),
+            _ => Self::AnotherError(format!("Another Error: {}", err)),
         }
     }
 }

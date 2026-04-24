@@ -4,22 +4,6 @@ use utoipa::ToSchema;
 
 use crate::server::errors::ServerError;
 
-#[derive(Debug, Deserialize, Serialize, ToSchema)]
-pub struct ErrorResponse {
-    code: u16,
-    error: String,
-    message: String,
-}
-
-impl ErrorResponse {
-    pub fn new(code: u16, err: &str, msg: &str) -> Self {
-        ErrorResponse {
-            code,
-            error: err.to_string(),
-            message: msg.to_string(),
-        }
-    }
-}
 
 impl From<serde_json::Error> for ServerError {
     fn from(err: serde_json::Error) -> Self {

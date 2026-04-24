@@ -20,6 +20,6 @@ pub enum PublisherErrors {
 
 impl From<serde_json::Error> for PublisherErrors {
     fn from(err: serde_json::Error) -> Self {
-        Self::SerializeError(format!("Serde Serialization error: {}", err.to_string()))
+        Self::SerializeError(format!("Serde Serialization error: {}", err))
     }
 }
