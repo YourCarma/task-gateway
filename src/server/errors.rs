@@ -60,8 +60,6 @@ impl ServerError {
     }
 }
 
-
-
 impl From<PublisherErrors> for ServerError {
     fn from(err: PublisherErrors) -> Self {
         tracing::error!("Error: {err}", err = err.to_string());
@@ -72,8 +70,7 @@ impl From<PublisherErrors> for ServerError {
             PublisherErrors::IOError(err) => Self::IOError(err.to_string()),
             PublisherErrors::ServiceUnavailable(err) => Self::ServiceUnavailable(err.to_string()),
             PublisherErrors::SerializeError(err) => Self::SerdeError(err.to_string()),
-            PublisherErrors::AnotherError(err) => Self::InternalError(err.to_string())
-           
+            PublisherErrors::AnotherError(err) => Self::InternalError(err.to_string()),
         }
     }
 }

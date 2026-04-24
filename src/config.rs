@@ -1,5 +1,5 @@
-use crate::{logger::LoggerConfig, modules::broker::config::MessageBrokerConfig};
 use crate::server::config::ServerConfig;
+use crate::{logger::LoggerConfig, modules::broker::config::MessageBrokerConfig};
 
 use config::{Config, ConfigError, Environment, File, FileFormat};
 use derive_builder::Builder;

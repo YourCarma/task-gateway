@@ -6,8 +6,8 @@ use tokio::net::TcpListener;
 use tower_http::{cors, trace};
 
 use task_gateway::config::ServiceConfig;
-use task_gateway::{ServiceConnect, logger};
 use task_gateway::server::AppState;
+use task_gateway::{ServiceConnect, logger};
 
 #[tokio::main(worker_threads = 8)]
 async fn main() -> anyhow::Result<()> {

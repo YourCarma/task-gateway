@@ -36,7 +36,7 @@ pub struct MessageRequest {
 #[derive(Serialize, Deserialize, Getters, Debug, Clone, PartialEq, ToSchema)]
 #[getset(get = "pub")]
 pub struct MessageResponse {
-    #[schema(default = "user_id:service_name:task_uuid")]
+    #[schema(example = "12345:image-generation:550e8400-e29b-41d4-a716-446655440000")]
     task_key: String,
 }
 
@@ -44,4 +44,14 @@ impl MessageResponse {
     pub fn new(task_key: String) -> Self {
         Self { task_key }
     }
+}
+
+#[derive(Serialize, Deserialize, Getters, Debug, Clone, PartialEq, ToSchema)]
+#[schema(example = json!({
+    "message": "Broker is unavailable"
+}))]
+#[getset(get = "pub")]
+pub struct ApiErrorResponse {
+    #[schema(example = "Broker is unavailable")]
+    message: String,
 }

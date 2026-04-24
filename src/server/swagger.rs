@@ -1,19 +1,19 @@
 use crate::errors::*;
 use crate::server::router::broker::publish_message::*;
-use crate::server::router::models::{MessageRequest, MessageResponse};
+use crate::server::router::models::{ApiErrorResponse, MessageRequest, MessageResponse};
 use utoipa::OpenApi;
 
 #[derive(OpenApi)]
 #[openapi(
     info(
-        title="Task Gateway (Bus) service",
+        title="Task Gateway Bus API",
         version="1.0.0",
-        description = "Service implementing Broker Bus pattern"
+        description = "Task Gateway is a task bus API. It accepts task requests from clients, assigns task ids, publishes messages to the broker, and routes them to image or video services by task_type. A successful publish response means the task was accepted by the bus, not that the target service has completed processing."
     ),
     tags(
         (
             name = "Publisher",
-            description = "Publish message to broker",
+            description = "Create tasks in the bus and publish them to downstream services through the broker.",
         ),
     ),
 
@@ -21,8 +21,8 @@ use utoipa::OpenApi;
         schemas(
             MessageRequest,
             MessageResponse,
+            ApiErrorResponse,
             Successful,
-            ErrorResponse,
         ),
     ),
     paths(

@@ -17,20 +17,18 @@ use utoipa_swagger_ui::SwaggerUi;
 use crate::modules::BrokerProducer;
 
 pub struct AppState<B>
-where 
-    B: BrokerProducer
+where
+    B: BrokerProducer,
 {
     broker: Arc<B>,
 }
 
 impl<B> AppState<B>
-where 
-    B: BrokerProducer
+where
+    B: BrokerProducer,
 {
     pub fn new(broker: Arc<B>) -> Self {
-        AppState {
-            broker,
-        }
+        AppState { broker }
     }
 }
 

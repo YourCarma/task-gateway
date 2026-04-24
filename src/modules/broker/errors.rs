@@ -1,6 +1,5 @@
 use thiserror::Error;
 
-
 #[derive(Debug, Error)]
 pub enum PublisherErrors {
     #[error("Broker is unavailable: {0}")]
@@ -19,8 +18,7 @@ pub enum PublisherErrors {
     NotFoundError(String),
 }
 
-
-impl From<serde_json::Error> for PublisherErrors{
+impl From<serde_json::Error> for PublisherErrors {
     fn from(err: serde_json::Error) -> Self {
         Self::SerializeError(format!("Serde Serialization error: {}", err.to_string()))
     }

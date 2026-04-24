@@ -1,5 +1,5 @@
-pub mod errors;
 pub mod core;
+pub mod errors;
 use std::sync::Arc;
 
 use lapin::{Channel, Connection, ConnectionProperties};
@@ -7,7 +7,6 @@ use lapin::{Channel, Connection, ConnectionProperties};
 use crate::ServiceConnect;
 use crate::modules::broker::config::MessageBrokerConfig;
 use crate::modules::broker::errors::PublisherErrors;
-
 
 pub struct RabbitMQProducer {
     options: Arc<MessageBrokerConfig>,
