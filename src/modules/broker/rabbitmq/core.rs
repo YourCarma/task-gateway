@@ -11,6 +11,12 @@ use crate::modules::broker::rabbitmq::RabbitMQProducer;
 #[async_trait::async_trait]
 impl BrokerProducer for RabbitMQProducer {
     async fn publish(&self, payload: PublishMessage) -> BrokerResult<String> {
+        let route = self.options.route(payload.task_type()).ok_or_else(|| {
+            PublisherErrors::NotFoundError(format!("Unknown task type: {}", payload.task_type()))
+        })?;
+        let exchange = route.exchange();
+        let routing = route.task_type().as_str();
+
         tracing::debug!("Creating channel...");
         let channel = self.connection.create_channel().await?;
         let bytes = serde_json::to_vec(&payload)?;
@@ -21,13 +27,9 @@ impl BrokerProducer for RabbitMQProducer {
         let task_id: &Uuid = payload.task_id();
         let user_id = payload.user_id().to_owned();
 
-        let task_type = payload.task_type().to_owned();
-        let routing = task_type.to_string();
-        let exchange = task_type.exchange();
-
         channel
             .exchange_declare(
-                exchange.to_string().into(),
+                exchange.as_str().into(),
                 ExchangeKind::Direct,
                 ExchangeDeclareOptions {
                     passive: true,
@@ -43,8 +45,8 @@ impl BrokerProducer for RabbitMQProducer {
 
         let confirm = channel
             .basic_publish(
-                exchange.to_string().into(),
-                routing.clone().into(),
+                exchange.as_str().into(),
+                routing.into(),
                 pub_opts,
                 bytes.as_slice(),
                 BasicProperties::default().with_delivery_mode(2),
@@ -76,12 +78,8 @@ impl BrokerProducer for RabbitMQProducer {
             }
         }
 
-        tracing::info!(
-            exchange = task_type.to_string(),
-            routing = routing,
-            "Rabbit confirmed:"
-        );
-        let task_key = format!("{}:{}:{}", user_id, exchange.to_service_name(), task_id);
+        tracing::info!(exchange = exchange, routing = routing, "Rabbit confirmed:");
+        let task_key = format!("{}:{}:{}", user_id, route.service_name(), task_id);
         Ok(task_key)
     }
 }

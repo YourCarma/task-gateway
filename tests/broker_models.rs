@@ -1,17 +1,15 @@
+use config::{Config, File, FileFormat};
 use serde_json::json;
-use task_gateway::modules::broker::models::{PublishMessage, ServiceExchange, TaskType};
+use task_gateway::modules::broker::config::{BrokerRouteConfig, MessageBrokerConfig};
+use task_gateway::modules::broker::models::{PublishMessage, TaskType};
 use uuid::Uuid;
 
 #[test]
 fn task_type_serializes_to_public_routing_key() {
-    let cases = [
-        (TaskType::ImageGenerate, "images.generate"),
-        (TaskType::ImageEdit, "images.edit"),
-        (TaskType::VideosGenerate, "videos.generate"),
-        (TaskType::VideosAnimate, "videos.animate"),
-    ];
+    let cases = ["images.generate", "images.edit", "audio.generate"];
 
-    for (task_type, expected) in cases {
+    for expected in cases {
+        let task_type = TaskType::new(expected);
         let serialized = serde_json::to_value(&task_type).unwrap();
 
         assert_eq!(serialized, json!(expected));
@@ -21,52 +19,79 @@ fn task_type_serializes_to_public_routing_key() {
 
 #[test]
 fn task_type_deserializes_from_public_routing_key() {
-    let cases = [
-        ("images.generate", TaskType::ImageGenerate),
-        ("images.edit", TaskType::ImageEdit),
-        ("videos.generate", TaskType::VideosGenerate),
-        ("videos.animate", TaskType::VideosAnimate),
-    ];
+    let cases = ["images.generate", "videos.animate", "audio.generate"];
 
-    for (raw, expected) in cases {
+    for raw in cases {
         let task_type: TaskType = serde_json::from_value(json!(raw)).unwrap();
 
-        assert_eq!(task_type, expected);
+        assert_eq!(task_type.as_str(), raw);
     }
 }
 
 #[test]
-fn task_type_maps_to_expected_exchange() {
-    let cases = [
-        (TaskType::ImageGenerate, ServiceExchange::ImagesExchange),
-        (TaskType::ImageEdit, ServiceExchange::ImagesExchange),
-        (TaskType::VideosGenerate, ServiceExchange::VideosExchange),
-        (TaskType::VideosAnimate, ServiceExchange::VideosExchange),
-    ];
+fn broker_config_resolves_configured_route() {
+    let config = broker_config(vec![BrokerRouteConfig::new(
+        "images.generate",
+        "images.tasks",
+        "image-generation",
+    )]);
 
-    for (task_type, expected_exchange) in cases {
-        assert_eq!(task_type.exchange(), expected_exchange);
-    }
+    let route = config.route(&TaskType::new("images.generate")).unwrap();
+
+    assert_eq!(route.exchange(), "images.tasks");
+    assert_eq!(route.service_name(), "image-generation");
+    assert!(config.route(&TaskType::new("audio.generate")).is_none());
 }
 
 #[test]
-fn service_exchange_has_public_broker_name_and_service_name() {
+fn broker_routes_deserialize_from_toml() {
+    let settings = Config::builder()
+        .add_source(File::from_str(
+            r#"
+                [broker]
+                address = "amqp://localhost:5672"
+
+                [[broker.routes]]
+                task_type = "images.generate"
+                exchange = "images.tasks"
+                service_name = "image-generation"
+            "#,
+            FileFormat::Toml,
+        ))
+        .build()
+        .unwrap();
+    let config: MessageBrokerConfig = settings.get("broker").unwrap();
+
+    config.validate().unwrap();
+    let route = config.route(&TaskType::new("images.generate")).unwrap();
+    assert_eq!(route.exchange(), "images.tasks");
+    assert_eq!(route.service_name(), "image-generation");
+}
+
+#[test]
+fn broker_config_rejects_duplicate_task_types() {
+    let config = broker_config(vec![
+        BrokerRouteConfig::new("images.generate", "images.tasks", "image-generation"),
+        BrokerRouteConfig::new("images.generate", "other.tasks", "other-service"),
+    ]);
+
+    assert_eq!(
+        config.validate().unwrap_err(),
+        "duplicate broker route for task_type 'images.generate'"
+    );
+}
+
+#[test]
+fn broker_config_rejects_invalid_route_fields() {
     let cases = [
-        (
-            ServiceExchange::ImagesExchange,
-            "images.tasks",
-            "image-generation",
-        ),
-        (
-            ServiceExchange::VideosExchange,
-            "videos.tasks",
-            "video-generation",
-        ),
+        BrokerRouteConfig::new("", "images.tasks", "image-generation"),
+        BrokerRouteConfig::new("images.generate", " ", "image-generation"),
+        BrokerRouteConfig::new("images.generate", "images.tasks", ""),
+        BrokerRouteConfig::new("images.generate", "images.tasks", "image:generation"),
     ];
 
-    for (exchange, broker_name, service_name) in cases {
-        assert_eq!(exchange.to_string(), broker_name);
-        assert_eq!(exchange.to_service_name(), service_name);
+    for route in cases {
+        assert!(broker_config(vec![route]).validate().is_err());
     }
 }
 
@@ -82,13 +107,13 @@ fn publish_message_keeps_original_payload_fields() {
     let message = PublishMessage::new(
         task_id,
         "user-123".to_string(),
-        TaskType::ImageGenerate,
+        TaskType::new("images.generate"),
         payload.clone(),
     );
 
     assert_eq!(*message.task_id(), task_id);
     assert_eq!(message.user_id(), "user-123");
-    assert_eq!(*message.task_type(), TaskType::ImageGenerate);
+    assert_eq!(message.task_type().as_str(), "images.generate");
     assert_eq!(message.payload(), &payload);
 }
 
@@ -98,7 +123,7 @@ fn publish_message_serializes_task_type_as_routing_key() {
     let message = PublishMessage::new(
         task_id,
         "user-123".to_string(),
-        TaskType::VideosAnimate,
+        TaskType::new("videos.animate"),
         json!({ "source_video": "intro.mp4" }),
     );
 
@@ -115,4 +140,8 @@ fn publish_message_serializes_task_type_as_routing_key() {
             }
         })
     );
+}
+
+fn broker_config(routes: Vec<BrokerRouteConfig>) -> MessageBrokerConfig {
+    MessageBrokerConfig::new("amqp://localhost:5672", routes)
 }

@@ -50,7 +50,9 @@ impl ServiceConfig {
                 .add_source(env_config)
                 .build()?;
 
-            settings.try_deserialize()
+            let config: Self = settings.try_deserialize()?;
+            config.broker.validate().map_err(ConfigError::Message)?;
+            Ok(config)
         }
     }
 }

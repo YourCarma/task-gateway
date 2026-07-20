@@ -87,7 +87,8 @@ If a task type points to an exchange or routing key that is not configured in Ra
 
 ## Service Configuration
 
-Task Gateway only needs the RabbitMQ connection address and the HTTP server address.
+Task Gateway configuration contains the HTTP server address, RabbitMQ connection
+address, and the task routing table.
 
 Default local configuration is stored in:
 
@@ -109,36 +110,40 @@ TASK_GATEWAY__SERVER__ADDRESS=0.0.0.0:10010
 TASK_GATEWAY__BROKER__ADDRESS=amqp://rabbitmq:5672
 ```
 
-The broker topology itself must still be configured in RabbitMQ definitions. Do not add queues, bindings, routing keys, or exchange declarations to Task Gateway configuration.
+Routes are defined in TOML because arrays of route tables are easier to maintain
+there than through environment variables:
+
+```toml
+[[broker.routes]]
+task_type = "images.generate"
+exchange = "images.tasks"
+service_name = "image-generation"
+```
+
+`task_type` is also used as the RabbitMQ routing key. `service_name` becomes the
+middle segment of the returned `task_key` and therefore must not contain `:`.
+Duplicate task types and empty route fields cause startup to fail.
+
+Queues, exchanges, and bindings are still owned by RabbitMQ and configured in
+`docker-compose/rabbitmq/definitions.json`. They are not created by Task Gateway.
 
 ## Adding a New Task Type
 
-To add a new task type for an existing service domain, update both Task Gateway code and RabbitMQ definitions.
+To add a new task type for an existing service domain, update the Task Gateway
+configuration and RabbitMQ definitions. Recompiling Task Gateway is not required.
 
 Example: add `images.upscale` to the existing image service.
 
-1. Add the task type to `TaskType` in `src/modules/broker/models/mod.rs`:
+1. Add the route to `config/development.toml` or the active run-mode file:
 
-```rust
-#[serde(rename = "images.upscale")]
-ImagesUpscale,
+```toml
+[[broker.routes]]
+task_type = "images.upscale"
+exchange = "images.tasks"
+service_name = "image-generation"
 ```
 
-2. Return the public routing key in `impl ToString for TaskType`:
-
-```rust
-Self::ImagesUpscale => "images.upscale".into(),
-```
-
-3. Map the task type to the correct exchange in `TaskType::exchange()`:
-
-```rust
-Self::ImageGenerate | Self::ImageEdit | Self::ImagesUpscale => {
-    ServiceExchange::ImagesExchange
-}
-```
-
-4. Add a RabbitMQ binding in `docker-compose/rabbitmq/definitions.json`:
+2. Add a RabbitMQ binding in `docker-compose/rabbitmq/definitions.json`:
 
 ```json
 {
@@ -151,47 +156,25 @@ Self::ImageGenerate | Self::ImageEdit | Self::ImagesUpscale => {
 }
 ```
 
-5. Update API documentation and tests so the new task type is visible to clients.
+3. Update API documentation and tests so the new task type is visible to clients.
 
 ## Adding a New Exchange and Service Domain
 
-To connect a new downstream service domain, add routing support in code and create the RabbitMQ topology on the broker side.
+To connect a new downstream service domain, add a Task Gateway route and create
+the RabbitMQ topology on the broker side.
 
 Example: add an audio service with `audio.generate`.
 
-1. Add task type variants in `src/modules/broker/models/mod.rs`:
+1. Add the route to the active Task Gateway configuration:
 
-```rust
-#[serde(rename = "audio.generate")]
-AudioGenerate,
+```toml
+[[broker.routes]]
+task_type = "audio.generate"
+exchange = "audio.tasks"
+service_name = "audio-generation"
 ```
 
-2. Add a service exchange:
-
-```rust
-#[serde(rename = "audio.tasks")]
-AudioExchange,
-```
-
-3. Map the task type to the exchange:
-
-```rust
-Self::AudioGenerate => ServiceExchange::AudioExchange,
-```
-
-4. Add the exchange name:
-
-```rust
-Self::AudioExchange => "audio.tasks".to_string(),
-```
-
-5. Add the service name used in `task_key`:
-
-```rust
-Self::AudioExchange => "audio-generation".to_owned(),
-```
-
-6. Configure RabbitMQ in `docker-compose/rabbitmq/definitions.json`:
+2. Configure RabbitMQ in `docker-compose/rabbitmq/definitions.json`:
 
 ```json
 {
@@ -228,9 +211,9 @@ Self::AudioExchange => "audio-generation".to_owned(),
 }
 ```
 
-7. Make sure the new downstream service consumes from `audio.queue`.
+3. Make sure the new downstream service consumes from `audio.queue`.
 
-8. Update Swagger descriptions and tests.
+4. Update Swagger descriptions and tests.
 
 ## Message Publishing Behavior
 

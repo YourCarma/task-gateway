@@ -27,11 +27,8 @@ image or video processing.
 
 Request body:
 * `user_id`: client user identifier. It becomes part of the returned task key.
-* `task_type`: task action and routing key. Supported values:
-    * `images.generate` - create an image generation task.
-    * `images.edit` - create an image editing task.
-    * `videos.generate` - create a video generation task.
-    * `videos.animate` - create a video animation task.
+* `task_type`: task action and routing key. The value must exist in the active
+  `broker.routes` configuration.
 * `payload`: service-specific JSON object. The bus forwards it as-is to the
   target service selected by `task_type`.
 
