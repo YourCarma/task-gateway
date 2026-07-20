@@ -2,27 +2,22 @@
 address = "0.0.0.0:10001"
 llm_mode="openai"
 
+[[broker.routes]]
+task_type = "images.generate"
+exchange = "images.tasks"
+service_name = "image-generation"
 
-[llm_client.openai]
-address="https://api.openai.com/v1"
-api_key="sk-proj-"
-use_proxy=false
-proxy_address="ip:port"
+[[broker.routes]]
+task_type = "images.edit"
+exchange = "images.tasks"
+service_name = "image-generation"
 
+[[broker.routes]]
+task_type = "videos.generate"
+exchange = "videos.tasks"
+service_name = "video-generation"
 
-[llm_client.openrouter]
-address="https://openrouter.ai/api/v1"
-api_key="sk-or-v1-"
-use_proxy=false
-proxy_address="ip:port"
-
-[llm_client.xai]
-address="https://api.x.ai/v1"
-api_key="sk-or-v1-"
-use_proxy=false
-proxy_address="ip:port"
-
-[logger]
-level = "debug"
-use_loki = "false"
-address = "http://0.0.0.0:3110"
+[[broker.routes]]
+task_type = "videos.animate"
+exchange = "videos.tasks"
+service_name = "video-generation"

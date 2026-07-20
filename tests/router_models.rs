@@ -1,5 +1,4 @@
 use serde_json::json;
-use task_gateway::modules::broker::models::TaskType;
 use task_gateway::server::router::models::{ApiErrorResponse, MessageRequest, MessageResponse};
 
 #[test]
@@ -17,21 +16,21 @@ fn message_request_deserializes_public_request_json() {
     let request: MessageRequest = serde_json::from_value(raw.clone()).unwrap();
 
     assert_eq!(request.user_id(), "12345");
-    assert_eq!(*request.task_type(), TaskType::ImageGenerate);
+    assert_eq!(request.task_type().as_str(), "images.generate");
     assert_eq!(request.payload(), &raw["payload"]);
 }
 
 #[test]
-fn message_request_rejects_unknown_task_type() {
+fn message_request_accepts_task_type_for_runtime_route_lookup() {
     let raw = json!({
         "user_id": "12345",
         "task_type": "audio.generate",
         "payload": {}
     });
 
-    let result = serde_json::from_value::<MessageRequest>(raw);
+    let request = serde_json::from_value::<MessageRequest>(raw).unwrap();
 
-    assert!(result.is_err());
+    assert_eq!(request.task_type().as_str(), "audio.generate");
 }
 
 #[test]

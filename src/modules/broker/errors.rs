@@ -2,6 +2,8 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum PublisherErrors {
+    #[error("Broker configuration error: {0}")]
+    ConfigurationError(String),
     #[error("Broker is unavailable: {0}")]
     ServiceUnavailable(String),
     #[error("IO Error: {0}")]

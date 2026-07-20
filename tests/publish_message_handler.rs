@@ -17,7 +17,14 @@ struct SuccessfulBroker;
 #[async_trait::async_trait]
 impl BrokerProducer for SuccessfulBroker {
     async fn publish(&self, payload: PublishMessage) -> BrokerResult<String> {
-        let service_name = payload.task_type().exchange().to_service_name();
+        let service_name = match payload.task_type().as_str() {
+            "images.generate" => "image-generation",
+            task_type => {
+                return Err(PublisherErrors::NotFoundError(format!(
+                    "Unknown task type: {task_type}"
+                )));
+            }
+        };
 
         Ok(format!(
             "{}:{}:{}",
@@ -26,6 +33,29 @@ impl BrokerProducer for SuccessfulBroker {
             payload.task_id()
         ))
     }
+}
+
+#[tokio::test]
+async fn publish_message_returns_not_found_for_unknown_route() {
+    let request: MessageRequest = serde_json::from_value(json!({
+        "user_id": "12345",
+        "task_type": "audio.generate",
+        "payload": {}
+    }))
+    .unwrap();
+    let state = State(Arc::new(AppState::new(Arc::new(SuccessfulBroker))));
+
+    let error = match publish_message(state, Json(request)).await {
+        Ok(_) => panic!("publish_message should reject an unknown route"),
+        Err(error) => error,
+    };
+    let response = error.into_response();
+
+    assert_eq!(response.status(), 404);
+    assert_eq!(
+        response_json(response).await,
+        json!({ "message": "Unknown task type: audio.generate" })
+    );
 }
 
 struct UnavailableBroker;
