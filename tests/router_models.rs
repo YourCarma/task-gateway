@@ -16,7 +16,7 @@ fn message_request_deserializes_public_request_json() {
 
     let request: MessageRequest = serde_json::from_value(raw.clone()).unwrap();
 
-    assert_eq!(request.user_id(), "12345");
+    assert_eq!(request.user_id().as_deref(), Some("12345"));
     assert_eq!(*request.task_type(), TaskType::ImageGenerate);
     assert_eq!(request.payload(), &raw["payload"]);
 }

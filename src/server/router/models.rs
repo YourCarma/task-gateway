@@ -18,8 +18,9 @@ use crate::modules::broker::models::TaskType;
 }))]
 #[getset(get = "pub")]
 pub struct MessageRequest {
-    #[schema(example = "12345")]
-    user_id: String,
+    /// Client user identifier used when the configured request header is absent.
+    #[schema(example = "12345", nullable = false)]
+    user_id: Option<String>,
 
     #[schema(example = "images.generate")]
     task_type: TaskType,

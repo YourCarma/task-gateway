@@ -1,5 +1,7 @@
 use std::sync::Arc;
 
+use anyhow::Context;
+use axum::http::HeaderName;
 use axum_tracing_opentelemetry::middleware::OtelAxumLayer;
 use task_gateway::modules::broker::rabbitmq::RabbitMQProducer;
 use tokio::net::TcpListener;
@@ -14,9 +16,12 @@ async fn main() -> anyhow::Result<()> {
     let config = ServiceConfig::new()?;
     logger::init_logger(config.logger())?;
 
+    let server_config = config.server();
+    let user_id_header = HeaderName::from_bytes(server_config.user_id_header().as_bytes())
+        .context("TASK_GATEWAY__SERVER__USER_ID_HEADER contains an invalid HTTP header name")?;
     let broker_config = config.broker();
     let broker = Arc::new(RabbitMQProducer::connect(broker_config).await?);
-    let server_app = AppState::new(broker);
+    let server_app = AppState::new(broker, user_id_header);
 
     let cors_layer = cors::CorsLayer::permissive();
     let trace_layer = trace::TraceLayer::new_for_http()
@@ -28,7 +33,6 @@ async fn main() -> anyhow::Result<()> {
         .layer(cors_layer)
         .layer(OtelAxumLayer::default());
 
-    let server_config = config.server();
     tracing::info!(
         address = format!("http://{}", server_config.address()),
         "Running server on"

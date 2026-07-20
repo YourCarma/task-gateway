@@ -3,6 +3,7 @@ use std::sync::Arc;
 use axum::Json;
 use axum::body::to_bytes;
 use axum::extract::State;
+use axum::http::{HeaderMap, HeaderName, HeaderValue};
 use axum::response::{IntoResponse, Response};
 use serde_json::json;
 use task_gateway::modules::BrokerProducer;
@@ -49,9 +50,9 @@ async fn publish_message_returns_task_key_from_broker() {
         }
     }))
     .unwrap();
-    let state = State(Arc::new(AppState::new(Arc::new(SuccessfulBroker))));
+    let state = test_state(SuccessfulBroker);
 
-    let response = publish_message(state, Json(request))
+    let response = publish_message(state, HeaderMap::new(), Json(request))
         .await
         .unwrap()
         .into_response();
@@ -66,6 +67,78 @@ async fn publish_message_returns_task_key_from_broker() {
 }
 
 #[tokio::test]
+async fn publish_message_prefers_user_id_header_over_body() {
+    let request: MessageRequest = serde_json::from_value(json!({
+        "user_id": "body-user",
+        "task_type": "images.generate",
+        "payload": {}
+    }))
+    .unwrap();
+    let mut headers = HeaderMap::new();
+    headers.insert("x-user-id", HeaderValue::from_static("header-user"));
+
+    let response = publish_message(test_state(SuccessfulBroker), headers, Json(request))
+        .await
+        .unwrap()
+        .into_response();
+    let body = response_json(response).await;
+
+    assert!(
+        body["task_key"]
+            .as_str()
+            .unwrap()
+            .starts_with("header-user:image-generation:")
+    );
+}
+
+#[tokio::test]
+async fn publish_message_accepts_user_id_from_header_without_body_field() {
+    let request: MessageRequest = serde_json::from_value(json!({
+        "task_type": "images.generate",
+        "payload": {}
+    }))
+    .unwrap();
+    let mut headers = HeaderMap::new();
+    headers.insert("x-user-id", HeaderValue::from_static("header-user"));
+
+    let response = publish_message(test_state(SuccessfulBroker), headers, Json(request))
+        .await
+        .unwrap()
+        .into_response();
+
+    assert_eq!(response.status(), 200);
+}
+
+#[tokio::test]
+async fn publish_message_rejects_request_without_user_id() {
+    let request: MessageRequest = serde_json::from_value(json!({
+        "task_type": "images.generate",
+        "payload": {}
+    }))
+    .unwrap();
+
+    let error = match publish_message(
+        test_state(SuccessfulBroker),
+        HeaderMap::new(),
+        Json(request),
+    )
+    .await
+    {
+        Ok(_) => panic!("publish_message should require a user id"),
+        Err(error) => error,
+    };
+    let response = error.into_response();
+
+    assert_eq!(response.status(), 400);
+    assert_eq!(
+        response_json(response).await,
+        json!({
+            "message": "User id must be provided in the configured header or request body"
+        })
+    );
+}
+
+#[tokio::test]
 async fn publish_message_propagates_broker_error() {
     let request: MessageRequest = serde_json::from_value(json!({
         "user_id": "12345",
@@ -75,9 +148,9 @@ async fn publish_message_propagates_broker_error() {
         }
     }))
     .unwrap();
-    let state = State(Arc::new(AppState::new(Arc::new(UnavailableBroker))));
+    let state = test_state(UnavailableBroker);
 
-    let error = match publish_message(state, Json(request)).await {
+    let error = match publish_message(state, HeaderMap::new(), Json(request)).await {
         Ok(_) => panic!("publish_message should return broker error"),
         Err(error) => error,
     };
@@ -90,6 +163,13 @@ async fn publish_message_propagates_broker_error() {
             "message": "RabbitMQ connection is closed"
         })
     );
+}
+
+fn test_state<B: BrokerProducer>(broker: B) -> State<Arc<AppState<B>>> {
+    State(Arc::new(AppState::new(
+        Arc::new(broker),
+        HeaderName::from_static("x-user-id"),
+    )))
 }
 
 async fn response_json(response: Response) -> serde_json::Value {

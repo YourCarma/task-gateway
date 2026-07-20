@@ -1,13 +1,14 @@
 use std::sync::Arc;
 
 use axum::extract::{Json, State};
+use axum::http::HeaderMap;
 use axum::response::IntoResponse;
 use uuid::Uuid;
 
 use crate::modules::BrokerProducer;
 use crate::modules::broker::models::PublishMessage;
 use crate::server::AppState;
-use crate::server::errors::ServerResult;
+use crate::server::errors::{ServerError, ServerResult};
 use crate::server::router::models::{ApiErrorResponse, MessageRequest, MessageResponse};
 
 #[utoipa::path(
@@ -25,8 +26,11 @@ A successful response means that the task was accepted by the bus and published
 to the broker. It does not mean that the target service has already completed
 image or video processing.
 
-Request body:
-* `user_id`: client user identifier. It becomes part of the returned task key.
+Request identity:
+* The configured user id request header has the highest priority.
+* `user_id` in the body is used only when that header is absent.
+* One of these values must be present. The resolved user id becomes part of the
+  returned task key.
 * `task_type`: task action and routing key. Supported values:
     * `images.generate` - create an image generation task.
     * `images.edit` - create an image editing task.
@@ -43,7 +47,7 @@ Response body:
 "#,
     responses(
         (status = 200, description="Task has been accepted by the bus and published to the broker", body=MessageResponse),
-        (status = 400, description="Invalid JSON syntax or malformed request body", body=ApiErrorResponse),
+        (status = 400, description="Missing or invalid user id, invalid JSON syntax, or malformed request body", body=ApiErrorResponse),
         (status = 401, description="Request is not authorized to publish this task", body=ApiErrorResponse),
         (status = 404, description="Target service or route was not found", body=ApiErrorResponse),
         (status = 415, description="Request content type must be application/json", body=ApiErrorResponse),
@@ -54,13 +58,24 @@ Response body:
 )]
 pub async fn publish_message<B>(
     State(state): State<Arc<AppState<B>>>,
+    headers: HeaderMap,
     Json(payload): Json<MessageRequest>,
 ) -> ServerResult<impl IntoResponse>
 where
     B: BrokerProducer + Send + Sync,
 {
     let task_id = Uuid::new_v4();
-    let user_id = payload.user_id().to_owned();
+    let user_id = match headers.get(&state.user_id_header) {
+        Some(value) => value
+            .to_str()
+            .map(str::to_owned)
+            .map_err(|_| ServerError::BadRequest("User id header must be a string".to_owned()))?,
+        None => payload.user_id().to_owned().ok_or_else(|| {
+            ServerError::BadRequest(
+                "User id must be provided in the configured header or request body".to_owned(),
+            )
+        })?,
+    };
     let service_data = payload.payload().to_owned();
     let task_type = payload.task_type().to_owned();
 

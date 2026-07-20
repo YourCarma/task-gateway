@@ -12,6 +12,8 @@ pub type ServerResult<T> = Result<T, ServerError>;
 
 #[derive(Debug, Error, Serialize, ToSchema)]
 pub enum ServerError {
+    #[error("Bad request: {0}")]
+    BadRequest(String),
     #[error("Not found error: {0}")]
     NotFound(String),
     #[error("Broker is unavailable: {0}")]
@@ -39,6 +41,7 @@ pub enum ServerError {
 impl ServerError {
     pub fn status_code(&self) -> (String, StatusCode) {
         match self {
+            ServerError::BadRequest(msg) => (msg.to_owned(), StatusCode::BAD_REQUEST),
             ServerError::NotFound(msg) => (msg.to_owned(), StatusCode::NOT_FOUND),
             ServerError::DeserializeError(msg) => (msg.to_owned(), StatusCode::BAD_GATEWAY),
             ServerError::IOError(msg) => (msg.to_owned(), StatusCode::NO_CONTENT),

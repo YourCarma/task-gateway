@@ -7,6 +7,7 @@ use std::sync::Arc;
 
 use axum::Router;
 use axum::extract::DefaultBodyLimit;
+use axum::http::HeaderName;
 use axum::response::Html;
 use axum::routing::{get, post};
 use axum_prometheus::PrometheusMetricLayer;
@@ -21,14 +22,18 @@ where
     B: BrokerProducer,
 {
     broker: Arc<B>,
+    user_id_header: HeaderName,
 }
 
 impl<B> AppState<B>
 where
     B: BrokerProducer,
 {
-    pub fn new(broker: Arc<B>) -> Self {
-        AppState { broker }
+    pub fn new(broker: Arc<B>, user_id_header: HeaderName) -> Self {
+        AppState {
+            broker,
+            user_id_header,
+        }
     }
 }
 

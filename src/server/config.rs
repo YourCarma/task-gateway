@@ -5,4 +5,5 @@ use serde::Deserialize;
 #[getset(get = "pub")]
 pub struct ServerConfig {
     address: String,
+    user_id_header: String,
 }
