@@ -26,16 +26,10 @@ A successful response means that the task was accepted by the bus and published
 to the broker. It does not mean that the target service has already completed
 image or video processing.
 
-Request identity:
-* The configured user id request header has the highest priority.
-* `user_id` in the body is used only when that header is absent.
-* One of these values must be present. The resolved user id becomes part of the
-  returned task key.
-* `task_type`: task action and routing key. Supported values:
-    * `images.generate` - create an image generation task.
-    * `images.edit` - create an image editing task.
-    * `videos.generate` - create a video generation task.
-    * `videos.animate` - create a video animation task.
+Request body:
+* `user_id`: client user identifier. It becomes part of the returned task key.
+* `task_type`: task action and routing key. The value must exist in the active
+  `broker.routes` configuration.
 * `payload`: service-specific JSON object. The bus forwards it as-is to the
   target service selected by `task_type`.
 

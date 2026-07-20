@@ -22,7 +22,8 @@ pub struct MessageRequest {
     #[schema(example = "12345", nullable = false)]
     user_id: Option<String>,
 
-    #[schema(example = "images.generate")]
+    /// Task routing key configured in `broker.routes`.
+    #[schema(value_type = String, example = "images.generate")]
     task_type: TaskType,
 
     #[schema(example = json!({

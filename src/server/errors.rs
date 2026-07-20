@@ -63,6 +63,7 @@ impl From<PublisherErrors> for ServerError {
     fn from(err: PublisherErrors) -> Self {
         tracing::error!("Error: {err}", err = err.to_string());
         match err {
+            PublisherErrors::ConfigurationError(err) => Self::InternalError(err),
             PublisherErrors::DeserializeError(err) => Self::SerdeError(err.to_string()),
             PublisherErrors::NotFoundError(err) => Self::NotFound(err.to_string()),
             PublisherErrors::Unauthorized(err) => Self::Unauthorized(err.to_string()),

@@ -22,6 +22,9 @@ impl ServiceConnect for RabbitMQProducer {
 
     async fn connect(config: &Self::Config) -> Result<Self::Client, Self::Error> {
         tracing::debug!("Creating RabbitMQProducer channel...");
+        config
+            .validate()
+            .map_err(PublisherErrors::ConfigurationError)?;
         let address = config.address();
 
         let conn_props = ConnectionProperties::default();

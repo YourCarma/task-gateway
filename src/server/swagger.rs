@@ -8,7 +8,7 @@ use utoipa::OpenApi;
     info(
         title="Task Gateway Bus API",
         version="1.0.0",
-        description = "Task Gateway is a task bus API. It accepts task requests from clients, assigns task ids, publishes messages to the broker, and routes them to image or video services by task_type. A successful publish response means the task was accepted by the bus, not that the target service has completed processing."
+        description = "Task Gateway is a task bus API. It accepts task requests from clients, assigns task ids, publishes messages to the broker, and routes them to configured downstream services by task_type. A successful publish response means the task was accepted by the bus, not that the target service has completed processing."
     ),
     tags(
         (
