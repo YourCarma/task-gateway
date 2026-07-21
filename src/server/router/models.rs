@@ -7,7 +7,6 @@ use crate::modules::broker::models::TaskType;
 
 #[derive(Serialize, Deserialize, Getters, Debug, Clone, PartialEq, ToSchema)]
 #[schema(example = json!({
-    "user_id": "12345",
     "task_type": "images.generate",
     "payload": {
         "model": "openrouter::google/gemini-3.1-flash-image-preview",
@@ -18,7 +17,8 @@ use crate::modules::broker::models::TaskType;
 }))]
 #[getset(get = "pub")]
 pub struct MessageRequest {
-    /// Client user identifier used when the configured request header is absent.
+    /// Optional client user identifier. Used only when the configured request
+    /// header is absent; the header always has priority.
     #[schema(example = "12345", nullable = false)]
     user_id: Option<String>,
 

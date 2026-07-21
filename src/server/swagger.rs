@@ -1,7 +1,9 @@
 use crate::errors::*;
 use crate::server::router::broker::publish_message::*;
 use crate::server::router::models::{ApiErrorResponse, MessageRequest, MessageResponse};
+use axum::http::HeaderName;
 use utoipa::OpenApi;
+use utoipa::openapi::OpenApi as OpenApiDocument;
 
 #[derive(OpenApi)]
 #[openapi(
@@ -30,6 +32,48 @@ use utoipa::OpenApi;
     )
 )]
 pub(super) struct ApiDoc;
+
+pub(super) fn api_doc(user_id_header: &HeaderName) -> OpenApiDocument {
+    let mut document = ApiDoc::openapi();
+
+    if let Some(parameters) = document
+        .paths
+        .paths
+        .get_mut("/api/v1/broker/publish")
+        .and_then(|path| path.post.as_mut())
+        .and_then(|operation| operation.parameters.as_mut())
+        && let Some(parameter) = parameters
+            .iter_mut()
+            .find(|parameter| parameter.name == "x-user-id")
+    {
+        parameter.name = user_id_header.as_str().to_owned();
+    }
+
+    document
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn user_id_header_parameter_uses_runtime_configuration() {
+        let document = api_doc(&HeaderName::from_static("x-auth-user"));
+        let parameters = document
+            .paths
+            .paths
+            .get("/api/v1/broker/publish")
+            .and_then(|path| path.post.as_ref())
+            .and_then(|operation| operation.parameters.as_ref())
+            .unwrap();
+
+        assert!(
+            parameters
+                .iter()
+                .any(|parameter| parameter.name == "x-auth-user")
+        );
+    }
+}
 
 pub trait SwaggerExample {
     type Example;

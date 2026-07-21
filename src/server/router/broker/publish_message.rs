@@ -16,6 +16,13 @@ use crate::server::router::models::{ApiErrorResponse, MessageRequest, MessageRes
     path = "/api/v1/broker/publish",
     request_body = MessageRequest,
     tags = ["Publisher"],
+    params(
+        (
+            "x-user-id" = Option<String>,
+            Header,
+            description = "Client user identifier. Takes priority over user_id from the request body. The parameter name is replaced at runtime with TASK_GATEWAY__SERVER__USER_ID_HEADER."
+        )
+    ),
     description = r#"
 ## Create task in the bus
 
@@ -26,8 +33,15 @@ A successful response means that the task was accepted by the bus and published
 to the broker. It does not mean that the target service has already completed
 image or video processing.
 
+User identity:
+* The user id header has priority over `user_id` from the request body.
+* The header name is configured by `TASK_GATEWAY__SERVER__USER_ID_HEADER`
+  (`x-user-id` by default) and is shown above using the active configuration.
+* `user_id` in the request body is optional and is used only when the header is
+  absent.
+* If neither source is provided, the endpoint returns `400 Bad Request`.
+
 Request body:
-* `user_id`: client user identifier. It becomes part of the returned task key.
 * `task_type`: task action and routing key. The value must exist in the active
   `broker.routes` configuration.
 * `payload`: service-specific JSON object. The bus forwards it as-is to the

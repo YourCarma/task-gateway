@@ -44,9 +44,9 @@ async fn publish_message_returns_not_found_for_unknown_route() {
         "payload": {}
     }))
     .unwrap();
-    let state = State(Arc::new(AppState::new(Arc::new(SuccessfulBroker))));
+    let state = test_state(SuccessfulBroker);
 
-    let error = match publish_message(state, Json(request)).await {
+    let error = match publish_message(state, HeaderMap::new(), Json(request)).await {
         Ok(_) => panic!("publish_message should reject an unknown route"),
         Err(error) => error,
     };

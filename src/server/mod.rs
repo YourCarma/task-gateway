@@ -11,8 +11,6 @@ use axum::http::HeaderName;
 use axum::response::Html;
 use axum::routing::{get, post};
 use axum_prometheus::PrometheusMetricLayer;
-use swagger::ApiDoc;
-use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
 use crate::modules::BrokerProducer;
@@ -42,10 +40,11 @@ where
     B: BrokerProducer + Send + Sync + 'static,
 {
     let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
+    let openapi = swagger::api_doc(&app.user_id_header);
 
     let app_arc = Arc::new(app);
     Router::new()
-        .merge(SwaggerUi::new("/docs").url("/api-docs/openapi.json", ApiDoc::openapi()))
+        .merge(SwaggerUi::new("/docs").url("/api-docs/openapi.json", openapi))
         .route("/", get(Html("<a href=\"/docs\">ДОКУМЕНТАЦИЯ</h1>")))
         .route(
             "/api/v1/broker/publish",
