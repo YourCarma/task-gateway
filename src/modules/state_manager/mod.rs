@@ -1,0 +1,37 @@
+use std::sync::Arc;
+
+use reqwest::Client;
+
+use crate::{
+    ServiceConnect,
+    modules::state_manager::{config::StateManagerConfig, errors::StateManagerErrors},
+};
+
+pub mod config;
+pub mod errors;
+pub mod models;
+pub mod webhook_manager;
+
+pub struct WebhookManager {
+    config: Arc<StateManagerConfig>,
+    client: Arc<Client>,
+}
+
+#[async_trait::async_trait]
+impl ServiceConnect for WebhookManager {
+    type Config = StateManagerConfig;
+    type Error = StateManagerErrors;
+    type Client = Self;
+
+    async fn connect(config: &Self::Config) -> Result<Self::Client, Self::Error> {
+        tracing::debug!("Creating TaskManager client...");
+        let address = config.address();
+
+        let connection = Client::new();
+        tracing::info!(address=?address, "Connection to RabbitMQ Address: {address}");
+        Ok(Self {
+            config: Arc::new(config.to_owned()),
+            client: Arc::new(connection),
+        })
+    }
+}

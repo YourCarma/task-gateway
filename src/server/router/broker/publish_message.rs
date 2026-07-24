@@ -90,6 +90,7 @@ where
     let publish_message = PublishMessage::new(task_id, user_id, task_type, service_data);
 
     let result = state.broker.publish(publish_message).await?;
+
     let response = MessageResponse::new(result);
     Ok(Json(response).into_response())
 }
