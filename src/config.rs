@@ -1,5 +1,8 @@
 use crate::server::config::ServerConfig;
-use crate::{logger::LoggerConfig, modules::broker::config::MessageBrokerConfig};
+use crate::{
+    logger::LoggerConfig,
+    modules::{broker::config::MessageBrokerConfig, state_manager::config::StateManagerConfig},
+};
 
 use config::{Config, ConfigError, Environment, File, FileFormat};
 use derive_builder::Builder;
@@ -15,6 +18,7 @@ const DEV_FILE_CONFIG_PATH: &str = "./config/development.toml";
 #[getset(get = "pub")]
 pub struct ServiceConfig {
     broker: MessageBrokerConfig,
+    state_manager: StateManagerConfig,
     server: ServerConfig,
     logger: LoggerConfig,
 }

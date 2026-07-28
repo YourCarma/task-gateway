@@ -2,23 +2,38 @@
 
 > Rust + Axum + lapin service
 
-Task Gateway is a small HTTP API service that works as a task bus between clients and downstream processing services.
+Task Gateway is a small HTTP API service that works as a task bus between
+clients and downstream processing services.
 
 ![Context](./docs/Context.png)
-The service accepts task requests through HTTP, assigns a task id, serializes the request as a broker message, and publishes it to RabbitMQ. Downstream services consume messages from their own queues and process the task asynchronously.
+The service accepts task requests through HTTP, assigns a task id, publishes the
+request to RabbitMQ, and registers the initial task state through the configured
+state manager. Downstream services consume messages from their own queues and
+process the task asynchronously.
 
-A successful response from Task Gateway means that the task was accepted by the bus and published to RabbitMQ. It does not mean that the downstream service has completed the task.
+A successful publish response means that the task was published to RabbitMQ and
+registered in the state manager. It does not mean that the downstream service
+has completed the task.
 
 ## Current Integrations
 
-Task Gateway is currently connected to RabbitMQ and routes tasks to these downstream service domains:
+Task Gateway is connected to RabbitMQ for task delivery and to a webhook-based
+state manager for task creation and cancellation. It routes tasks to these
+downstream service domains:
 
 | Service domain | Service name in task key | Exchange | Queue | Task types |
 | --- | --- | --- | --- | --- |
 | Image generation | `image-generation` | `images.tasks` | `images.queue` | `images.generate`, `images.edit` |
 | Video generation | `video-generation` | `videos.tasks` | `videos.queue` | `videos.generate`, `videos.animate` |
 
-The public HTTP endpoint is:
+The public HTTP endpoints are:
+
+```http
+POST /api/v1/broker/publish
+POST /api/v1/tasks/cancel?task_id={task_key}
+```
+
+### Publish a task
 
 ```http
 POST /api/v1/broker/publish
@@ -55,6 +70,38 @@ user_id:service_name:task_uuid
 
 Clients should store this key if they need to track the task in downstream APIs.
 
+### Cancel a task
+
+Pass the `task_key` returned by the publish endpoint as the `task_id` query
+parameter:
+
+```http
+POST /api/v1/tasks/cancel?task_id=12345:image-generation:550e8400-e29b-41d4-a716-446655440000
+```
+
+Successful response:
+
+```json
+{
+  "code": 200,
+  "message": "ok"
+}
+```
+
+The endpoint passes `task_id` to the configured state manager. The webhook
+implementation updates the task progress to `CANCELLED` with progress `0.0`.
+
+## Task State Management
+
+After RabbitMQ accepts a message, Task Gateway extracts `service_name` from the
+returned `task_key`, serializes the original request payload into
+`response_data`, builds a pending `TaskState`, and submits it to the state
+manager.
+
+The publish operation is performed before state registration. If publishing
+succeeds but the state manager call fails, the API returns the state manager
+error even though the broker message has already been accepted.
+
 ## RabbitMQ Topology
 
 RabbitMQ topology is configured on the broker side, not by Task Gateway.
@@ -87,8 +134,8 @@ If a task type points to an exchange or routing key that is not configured in Ra
 
 ## Service Configuration
 
-Task Gateway configuration contains the HTTP server address, RabbitMQ connection
-address, and the task routing table.
+Task Gateway configuration contains the HTTP server address, RabbitMQ
+connection address, state manager endpoints, and the task routing table.
 
 Default local configuration is stored in:
 
@@ -108,7 +155,18 @@ Important variables:
 TASK_GATEWAY__RUN_MODE=development
 TASK_GATEWAY__SERVER__ADDRESS=0.0.0.0:10010
 TASK_GATEWAY__BROKER__ADDRESS=amqp://rabbitmq:5672
+TASK_GATEWAY__STATE_MANAGER__ADDRESS=http://webhook-manager:10001
+TASK_GATEWAY__STATE_MANAGER__CREATE_TASK_ENDPOINT=/api/v2/storage/task
+TASK_GATEWAY__STATE_MANAGER__UPDATE_PROGRESS_ENDPOINT=/api/v1/storage/update_progress
 ```
+
+`TASK_GATEWAY__STATE_MANAGER__CREATE_TASK_ENDPOINT` is used to register newly
+published tasks. `TASK_GATEWAY__STATE_MANAGER__UPDATE_PROGRESS_ENDPOINT` is
+used by the cancel endpoint to set the task state to `CANCELLED`.
+
+The Docker environment expects the state manager to be reachable as
+`webhook-manager:10001`. Override `TASK_GATEWAY__STATE_MANAGER__ADDRESS` when
+the service uses a different host or port.
 
 Routes are defined in TOML because arrays of route tables are easier to maintain
 there than through environment variables:
@@ -238,7 +296,9 @@ The message body is a serialized `PublishMessage`:
 }
 ```
 
-The `payload` object is service-specific. Task Gateway does not validate or transform it; it forwards the object to the selected downstream service.
+The `payload` object is service-specific. Task Gateway forwards it unchanged to
+the selected downstream service. The same object is serialized as a JSON string
+when it is stored in `TaskState.response_data`.
 
 ## Local Development
 

@@ -27,6 +27,7 @@ retry = "2.0"
 rstest = "0.26.1"
 serial_test = "3.5.0"
 lapin = "4.10.0"
+url = "2.5.8"
 
 [dependencies.chrono]
 version = "0.4.45"

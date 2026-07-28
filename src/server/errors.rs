@@ -6,6 +6,7 @@ use thiserror::Error;
 use utoipa::ToSchema;
 
 use crate::modules::broker::errors::PublisherErrors;
+use crate::modules::state_manager::errors::StateManagerErrors;
 use crate::server::swagger::SwaggerExample;
 
 pub type ServerResult<T> = Result<T, ServerError>;
@@ -71,6 +72,20 @@ impl From<PublisherErrors> for ServerError {
             PublisherErrors::ServiceUnavailable(err) => Self::ServiceUnavailable(err.to_string()),
             PublisherErrors::SerializeError(err) => Self::SerdeError(err.to_string()),
             PublisherErrors::AnotherError(err) => Self::InternalError(err.to_string()),
+        }
+    }
+}
+
+impl From<StateManagerErrors> for ServerError {
+    fn from(err: StateManagerErrors) -> Self {
+        tracing::error!("Error: {err}", err = err.to_string());
+        match err {
+            StateManagerErrors::ServiceUnavailable(err) => Self::ServiceUnavailable(err),
+            StateManagerErrors::IOError(err) => Self::IOError(err),
+            StateManagerErrors::DeserializeError(err) => Self::DeserializeError(err),
+            StateManagerErrors::SerializeError(err) => Self::SerdeError(err),
+            StateManagerErrors::AnotherError(err) => Self::InternalError(err),
+            StateManagerErrors::NotFoundError(err) => Self::NotFound(err),
         }
     }
 }

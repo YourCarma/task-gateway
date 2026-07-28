@@ -13,31 +13,40 @@ use axum::routing::{get, post};
 use axum_prometheus::PrometheusMetricLayer;
 use utoipa_swagger_ui::SwaggerUi;
 
-use crate::modules::BrokerProducer;
+use crate::modules::{BrokerProducer, StateManager};
 
-pub struct AppState<B>
+pub struct AppState<B, S>
 where
     B: BrokerProducer,
+    S: StateManager,
 {
     broker: Arc<B>,
+    state_manager: Arc<S>,
     user_id_header: HeaderName,
 }
 
-impl<B> AppState<B>
+impl<B, S> AppState<B, S>
 where
     B: BrokerProducer,
+    S: StateManager,
 {
-    pub fn new(broker: Arc<B>, user_id_header: HeaderName) -> Self {
+    pub fn new(broker: Arc<B>, state_manager: Arc<S>, user_id_header: HeaderName) -> Self {
         AppState {
             broker,
+            state_manager,
             user_id_header,
         }
     }
+
+    pub fn state_manager(&self) -> &S {
+        self.state_manager.as_ref()
+    }
 }
 
-pub fn init_server<B>(app: AppState<B>) -> Router
+pub fn init_server<B, S>(app: AppState<B, S>) -> Router
 where
     B: BrokerProducer + Send + Sync + 'static,
+    S: StateManager + Send + Sync + 'static,
 {
     let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
     let openapi = swagger::api_doc(&app.user_id_header);
@@ -49,6 +58,10 @@ where
         .route(
             "/api/v1/broker/publish",
             post(router::broker::publish_message::publish_message),
+        )
+        .route(
+            "/api/v1/tasks/cancel",
+            post(router::tasks::cancel_task::cancel_task),
         )
         .layer(DefaultBodyLimit::max(100 * 1024 * 1024))
         .route("/metrics", get(|| async move { metric_handle.render() }))

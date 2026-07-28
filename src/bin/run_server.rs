@@ -4,6 +4,7 @@ use anyhow::Context;
 use axum::http::HeaderName;
 use axum_tracing_opentelemetry::middleware::OtelAxumLayer;
 use task_gateway::modules::broker::rabbitmq::RabbitMQProducer;
+use task_gateway::modules::state_manager::WebhookManager;
 use tokio::net::TcpListener;
 use tower_http::{cors, trace};
 
@@ -21,7 +22,9 @@ async fn main() -> anyhow::Result<()> {
         .context("TASK_GATEWAY__SERVER__USER_ID_HEADER contains an invalid HTTP header name")?;
     let broker_config = config.broker();
     let broker = Arc::new(RabbitMQProducer::connect(broker_config).await?);
-    let server_app = AppState::new(broker, user_id_header);
+    let state_manager_config = config.state_manager();
+    let state_manager = Arc::new(WebhookManager::connect(state_manager_config).await?);
+    let server_app = AppState::new(broker, state_manager, user_id_header);
 
     let cors_layer = cors::CorsLayer::permissive();
     let trace_layer = trace::TraceLayer::new_for_http()

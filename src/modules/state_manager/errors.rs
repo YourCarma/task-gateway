@@ -2,7 +2,7 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum StateManagerErrors {
-    #[error("Broker is unavailable: {0}")]
+    #[error("State manager is unavailable: {0}")]
     ServiceUnavailable(String),
     #[error("IO Error: {0}")]
     IOError(String),
@@ -50,8 +50,8 @@ impl From<reqwest::Error> for StateManagerErrors {
     }
 }
 
-impl From<tracing_loki::url::ParseError> for StateManagerErrors {
-    fn from(value: tracing_loki::url::ParseError) -> Self {
+impl From<url::ParseError> for StateManagerErrors {
+    fn from(value: url::ParseError) -> Self {
         Self::AnotherError(format!("Error parsing base state manager url: {}", value))
     }
 }

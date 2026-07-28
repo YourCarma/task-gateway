@@ -1,6 +1,5 @@
 use getset::{Getters, Setters};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use uuid::Uuid;
 
 use crate::modules::state_manager::errors::StateManagerErrors;
@@ -9,12 +8,7 @@ pub type StateManagerResult<T> = Result<T, StateManagerErrors>;
 
 use std::str::FromStr;
 
-use chrono::{DateTime, Utc};
 use utoipa::ToSchema;
-
-fn current_timestamp() -> DateTime<Utc> {
-    Utc::now()
-}
 
 #[derive(Serialize, Deserialize, Default, PartialEq, Debug, Clone, ToSchema)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -41,6 +35,11 @@ pub struct TaskState {
     response_data: String,
 }
 
+#[derive(Serialize)]
+pub struct TaskCreation {
+    task: TaskState,
+}
+
 #[derive(Serialize, Deserialize, Getters, Setters, Default, PartialEq, Debug, Clone, ToSchema)]
 #[getset(get = "pub", set = "pub")]
 pub struct TaskProgress {
@@ -50,15 +49,30 @@ pub struct TaskProgress {
 
 impl Default for TaskState {
     fn default() -> Self {
-        let datetime = DateTime::parse_from_rfc3339("2025-05-26T14:18:48.717056300Z")
-            .unwrap()
-            .with_timezone(&Utc);
         Self {
             task_id: Uuid::from_str("96366fb0-0c0f-4671-8f3f-8a98641d11ae").unwrap(),
             user_id: "guest".to_owned(),
             service: "general".to_owned(),
             progress: TaskProgress::default(),
             response_data: String::new(),
+        }
+    }
+}
+
+impl TaskState {
+    pub fn new(
+        task_id: Uuid,
+        user_id: String,
+        service: String,
+        progress: TaskProgress,
+        response_data: String,
+    ) -> Self {
+        Self {
+            task_id,
+            user_id,
+            service,
+            progress,
+            response_data,
         }
     }
 }
@@ -82,5 +96,11 @@ impl TaskProgress {
 impl TaskProgressUpdate {
     pub fn new(key: String, progress: TaskProgress) -> Self {
         Self { key, progress }
+    }
+}
+
+impl TaskCreation {
+    pub fn new(task: TaskState) -> Self {
+        Self { task }
     }
 }

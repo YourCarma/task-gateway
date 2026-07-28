@@ -1,9 +1,16 @@
 use getset::Getters;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use utoipa::ToSchema;
+use utoipa::{IntoParams, ToSchema};
 
 use crate::modules::broker::models::TaskType;
+
+#[derive(Deserialize, Getters, Debug, Clone, PartialEq, IntoParams)]
+#[into_params(parameter_in = Query)]
+#[getset(get = "pub")]
+pub struct CancelTaskQuery {
+    task_id: String,
+}
 
 #[derive(Serialize, Deserialize, Getters, Debug, Clone, PartialEq, ToSchema)]
 #[schema(example = json!({

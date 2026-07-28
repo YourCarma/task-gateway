@@ -1,6 +1,7 @@
 use crate::errors::*;
 use crate::server::router::broker::publish_message::*;
 use crate::server::router::models::{ApiErrorResponse, MessageRequest, MessageResponse};
+use crate::server::router::tasks::cancel_task::*;
 use axum::http::HeaderName;
 use utoipa::OpenApi;
 use utoipa::openapi::OpenApi as OpenApiDocument;
@@ -10,12 +11,16 @@ use utoipa::openapi::OpenApi as OpenApiDocument;
     info(
         title="Task Gateway Bus API",
         version="1.0.0",
-        description = "Task Gateway is a task bus API. It accepts task requests from clients, assigns task ids, publishes messages to the broker, and routes them to configured downstream services by task_type. A successful publish response means the task was accepted by the bus, not that the target service has completed processing."
+        description = "Task Gateway is a task bus API. It accepts task requests from clients, assigns task ids, publishes messages to the broker, registers task state, and routes messages to configured downstream services by task_type. A successful publish response means the message was published and its task state was registered, not that the target service has completed processing."
     ),
     tags(
         (
             name = "Publisher",
             description = "Create tasks in the bus and publish them to downstream services through the broker.",
+        ),
+        (
+            name = "Tasks",
+            description = "Manage task state.",
         ),
     ),
 
@@ -29,6 +34,7 @@ use utoipa::openapi::OpenApi as OpenApiDocument;
     ),
     paths(
        publish_message,
+       cancel_task,
     )
 )]
 pub(super) struct ApiDoc;
@@ -52,9 +58,25 @@ pub(super) fn api_doc(user_id_header: &HeaderName) -> OpenApiDocument {
     document
 }
 
+pub trait SwaggerExample {
+    type Example;
+
+    fn example(value: Option<&str>) -> Self::Example;
+}
+
+impl SwaggerExample for Successful {
+    type Example = Self;
+
+    fn example(value: Option<&str>) -> Self::Example {
+        let msg = value.unwrap_or("Done");
+        Successful::new(200, msg)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use utoipa::openapi::path::ParameterIn;
 
     #[test]
     fn user_id_header_parameter_uses_runtime_configuration() {
@@ -73,19 +95,22 @@ mod tests {
                 .any(|parameter| parameter.name == "x-auth-user")
         );
     }
-}
 
-pub trait SwaggerExample {
-    type Example;
+    #[test]
+    fn cancel_task_uses_task_id_query_parameter() {
+        let document = api_doc(&HeaderName::from_static("x-user-id"));
+        let parameters = document
+            .paths
+            .paths
+            .get("/api/v1/tasks/cancel")
+            .and_then(|path| path.post.as_ref())
+            .and_then(|operation| operation.parameters.as_ref())
+            .unwrap();
+        let task_id = parameters
+            .iter()
+            .find(|parameter| parameter.name == "task_id")
+            .unwrap();
 
-    fn example(value: Option<&str>) -> Self::Example;
-}
-
-impl SwaggerExample for Successful {
-    type Example = Self;
-
-    fn example(value: Option<&str>) -> Self::Example {
-        let msg = value.unwrap_or("Done");
-        Successful::new(200, msg)
+        assert!(matches!(task_id.parameter_in, ParameterIn::Query));
     }
 }

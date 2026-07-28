@@ -24,11 +24,11 @@ impl ServiceConnect for WebhookManager {
     type Client = Self;
 
     async fn connect(config: &Self::Config) -> Result<Self::Client, Self::Error> {
-        tracing::debug!("Creating TaskManager client...");
+        tracing::debug!("Creating state manager client...");
         let address = config.address();
 
         let connection = Client::new();
-        tracing::info!(address=?address, "Connection to RabbitMQ Address: {address}");
+        tracing::info!(address=?address, "Created state manager client");
         Ok(Self {
             config: Arc::new(config.to_owned()),
             client: Arc::new(connection),
