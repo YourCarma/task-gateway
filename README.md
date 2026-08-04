@@ -17,9 +17,11 @@ has completed the task.
 
 ## Current Integrations
 
-Task Gateway is connected to RabbitMQ for task delivery and to a webhook-based
-state manager for task creation and cancellation. It routes tasks to these
-downstream service domains:
+Task Gateway is connected to RabbitMQ for task delivery and to
+[Webhook Manager](https://github.com/YourCarma/webhook_manager) as the state
+manager for task creation and cancellation (see
+[Webhook Manager](#webhook-manager)). It routes tasks to these downstream
+service domains:
 
 | Service domain | Service name in task key | Exchange | Queue | Task types |
 | --- | --- | --- | --- | --- |
@@ -101,6 +103,108 @@ manager.
 The publish operation is performed before state registration. If publishing
 succeeds but the state manager call fails, the API returns the state manager
 error even though the broker message has already been accepted.
+
+## Webhook Manager
+
+The state manager implementation used by Task Gateway is
+[Webhook Manager](https://github.com/YourCarma/webhook_manager) — a Redis-backed
+service that stores the state of long-running user tasks and exposes it over an
+HTTP API, a WebSocket stream, and Swagger UI. It listens on port `10001` by
+default and keeps task records with a TTL (3600 seconds by default).
+
+Task Gateway talks to it through the `StateManager` trait
+([src/modules/state_manager/](./src/modules/state_manager/)), so the service can
+be replaced by any other backend implementing the same two operations.
+
+### Shared task key
+
+Both services use the same key format, so the `task_key` returned by
+`POST /api/v1/broker/publish` can be used directly against Webhook Manager:
+
+```text
+user_id:service_name:task_uuid
+```
+
+Task Gateway builds it from `user_id`, the route's `service_name`, and the
+generated task UUID. `service_name` therefore must not contain `:`.
+
+### What Task Gateway sends
+
+Task Gateway is a write-only client — it never reads task state back.
+
+| Task Gateway action | Method | Endpoint (configurable) | Body |
+| --- | --- | --- | --- |
+| Register a published task | `POST` | `TASK_GATEWAY__STATE_MANAGER__CREATE_TASK_ENDPOINT` (`/api/v2/storage/task`) | `{ "task": { ... } }` |
+| Cancel a task | `PATCH` | `TASK_GATEWAY__STATE_MANAGER__UPDATE_PROGRESS_ENDPOINT` (`/api/v1/storage/update_progress`) | `{ "key": "...", "progress": { ... } }` |
+
+Create request body (`TaskState` wrapped in `task`):
+
+```json
+{
+  "task": {
+    "task_id": "550e8400-e29b-41d4-a716-446655440000",
+    "user_id": "12345",
+    "service": "image-generation",
+    "progress": {
+      "status": "PENDING",
+      "progress": 0.0
+    },
+    "response_data": "{\"prompt\":\"post-apocalyptic warrior\"}"
+  }
+}
+```
+
+`response_data` is the original request `payload` serialized into a JSON string.
+
+Cancel request body:
+
+```json
+{
+  "key": "12345:image-generation:550e8400-e29b-41d4-a716-446655440000",
+  "progress": {
+    "status": "CANCELLED",
+    "progress": 0.0
+  }
+}
+```
+
+Any non-2xx response from Webhook Manager is propagated to the client as a Task
+Gateway error.
+
+### Task statuses
+
+`PENDING`, `AWAITING`, `PROCESSING`, `READY`, `ERROR`, `CANCELLED`.
+
+Task Gateway writes only `PENDING` (on publish) and `CANCELLED` (on cancel).
+The remaining transitions are made by the downstream services that consume the
+RabbitMQ queues.
+
+### What clients and downstream services use
+
+These endpoints are served by Webhook Manager itself, not by Task Gateway:
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/v1/storage/task?key={task_key}` | read a single task |
+| `GET` | `/api/v1/storage/tasks?user_id={user_id}` | list user tasks (also accepts `X-User-ID`) |
+| `POST` | `/api/v1/storage/task` | create a task |
+| `DELETE` | `/api/v1/storage/task?key={task_key}` | delete a task |
+| `PATCH` | `/api/v1/storage/update_progress` | update status and progress |
+| `PATCH` | `/api/v1/storage/update_response_data` | write the task result |
+| `GET` | `/api/v1/storage/ws` | WebSocket stream of the user's task list |
+
+Typical flow: the client publishes a task through Task Gateway, stores the
+returned `task_key`, and then polls `/api/v1/storage/task` or subscribes to
+`/api/v1/storage/ws` on Webhook Manager while the downstream service updates
+progress and response data.
+
+### Connecting the service
+
+Webhook Manager is deployed separately — it is not part of
+`docker-compose/docker-compose.yaml`. The Docker environment expects it at
+`webhook-manager:10001`; point `TASK_GATEWAY__STATE_MANAGER__ADDRESS` at the
+actual host and adjust the endpoint variables if the deployed instance exposes
+a different API version.
 
 ## RabbitMQ Topology
 
