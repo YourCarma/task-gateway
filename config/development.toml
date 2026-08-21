@@ -4,21 +4,6 @@ user_id_header = "x-user-id"
 llm_mode="openai"
 
 [[broker.routes]]
-task_type = "images.generate"
-exchange = "images.tasks"
-service_name = "image-generation"
-
-[[broker.routes]]
-task_type = "images.edit"
-exchange = "images.tasks"
-service_name = "image-generation"
-
-[[broker.routes]]
-task_type = "videos.generate"
-exchange = "videos.tasks"
-service_name = "video-generation"
-
-[[broker.routes]]
-task_type = "videos.animate"
-exchange = "videos.tasks"
-service_name = "video-generation"
+task_type = "document-parser.translate"
+exchange = "document-parser.tasks"
+service_name = "document-parser"
