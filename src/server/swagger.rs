@@ -1,6 +1,7 @@
-use crate::errors::*;
 use crate::server::router::broker::publish_message::*;
-use crate::server::router::models::{ApiErrorResponse, MessageRequest, MessageResponse};
+use crate::server::router::models::{
+    ApiErrorResponse, MessageRequest, MessageResponse, Successful,
+};
 use crate::server::router::tasks::cancel_task::*;
 use axum::http::HeaderName;
 use utoipa::OpenApi;
@@ -10,7 +11,7 @@ use utoipa::openapi::OpenApi as OpenApiDocument;
 #[openapi(
     info(
         title="Task Gateway Bus API",
-        version="1.0.0",
+        version="1.1.0",
         description = "Task Gateway is a task bus API. It accepts task requests from clients, assigns task ids, publishes messages to the broker, registers task state, and routes messages to configured downstream services by task_type. A successful publish response means the message was published and its task state was registered, not that the target service has completed processing."
     ),
     tags(
@@ -62,15 +63,6 @@ pub trait SwaggerExample {
     type Example;
 
     fn example(value: Option<&str>) -> Self::Example;
-}
-
-impl SwaggerExample for Successful {
-    type Example = Self;
-
-    fn example(value: Option<&str>) -> Self::Example {
-        let msg = value.unwrap_or("Done");
-        Successful::new(200, msg)
-    }
 }
 
 #[cfg(test)]

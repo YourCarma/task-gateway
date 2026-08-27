@@ -90,6 +90,13 @@ impl From<StateManagerErrors> for ServerError {
     }
 }
 
+impl From<serde_json::Error> for ServerError {
+    fn from(err: serde_json::Error) -> Self {
+        tracing::error!("serde error: {err:#?}");
+        ServerError::SerdeError(err.to_string())
+    }
+}
+
 impl IntoResponse for ServerError {
     fn into_response(self) -> Response {
         #[derive(Serialize)]
@@ -116,28 +123,5 @@ impl SwaggerExample for ServerError {
             None => ServerError::ServiceUnavailable("Service unavailable".to_owned()),
             Some(msg) => ServerError::InternalError(msg.to_owned()),
         }
-    }
-}
-
-#[derive(Serialize, ToSchema)]
-pub struct Success {
-    status: u16,
-    message: String,
-}
-
-impl Default for Success {
-    fn default() -> Self {
-        Success {
-            status: 200,
-            message: "Ok".to_string(),
-        }
-    }
-}
-
-impl SwaggerExample for Success {
-    type Example = Self;
-
-    fn example(_value: Option<&str>) -> Self::Example {
-        Success::default()
     }
 }

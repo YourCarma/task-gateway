@@ -13,7 +13,8 @@ use axum::routing::{get, post};
 use axum_prometheus::PrometheusMetricLayer;
 use utoipa_swagger_ui::SwaggerUi;
 
-use crate::modules::{BrokerProducer, StateManager};
+use crate::modules::broker::BrokerProducer;
+use crate::modules::state_manager::StateManager;
 
 pub struct AppState<B, S>
 where

@@ -1,6 +1,6 @@
 use reqwest::Url;
 
-use crate::modules::StateManager;
+use crate::modules::state_manager::StateManager;
 use crate::modules::state_manager::WebhookManager;
 use crate::modules::state_manager::models::{
     StateManagerResult, TaskCreation, TaskProgress, TaskProgressUpdate, TaskState,

@@ -4,11 +4,11 @@ use axum::Json;
 use axum::extract::{Query, State};
 use axum::response::IntoResponse;
 
-use crate::errors::Successful;
-use crate::modules::{BrokerProducer, StateManager};
+use crate::modules::broker::BrokerProducer;
+use crate::modules::state_manager::StateManager;
 use crate::server::AppState;
 use crate::server::errors::ServerResult;
-use crate::server::router::models::{ApiErrorResponse, CancelTaskQuery};
+use crate::server::router::models::{ApiErrorResponse, CancelTaskQuery, Successful};
 
 #[utoipa::path(
     post,

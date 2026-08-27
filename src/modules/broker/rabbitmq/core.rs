@@ -3,7 +3,7 @@ use lapin::types::FieldTable;
 use lapin::{BasicProperties, Confirmation, ExchangeKind};
 use uuid::Uuid;
 
-use crate::modules::BrokerProducer;
+use crate::modules::broker::BrokerProducer;
 use crate::modules::broker::errors::PublisherErrors;
 use crate::modules::broker::models::{BrokerResult, PublishMessage};
 use crate::modules::broker::rabbitmq::RabbitMQProducer;

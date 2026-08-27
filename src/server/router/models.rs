@@ -1,9 +1,10 @@
-use getset::Getters;
+use getset::{CopyGetters, Getters};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::modules::broker::models::TaskType;
+use crate::server::swagger::SwaggerExample;
 
 #[derive(Deserialize, Getters, Debug, Clone, PartialEq, IntoParams)]
 #[into_params(parameter_in = Query)]
@@ -63,4 +64,34 @@ impl MessageResponse {
 pub struct ApiErrorResponse {
     #[schema(example = "Broker is unavailable")]
     message: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, Getters, CopyGetters, ToSchema)]
+pub struct Successful {
+    #[getset(get_copy = "pub")]
+    code: u16,
+    #[getset(get = "pub")]
+    message: String,
+}
+
+impl Default for Successful {
+    fn default() -> Self {
+        Successful::new(200, "ok")
+    }
+}
+
+impl Successful {
+    pub fn new(code: u16, msg: &str) -> Self {
+        let message = msg.to_string();
+        Successful { code, message }
+    }
+}
+
+impl SwaggerExample for Successful {
+    type Example = Self;
+
+    fn example(value: Option<&str>) -> Self::Example {
+        let msg = value.unwrap_or("Done");
+        Successful::new(200, msg)
+    }
 }

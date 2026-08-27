@@ -1,5 +1,5 @@
 [server]
-address = "0.0.0.0:10010"
+address = "0.0.0.0:10001"
 user_id_header = "x-user-id"
 
 [[broker.routes]]

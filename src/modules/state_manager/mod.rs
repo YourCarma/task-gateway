@@ -4,13 +4,23 @@ use reqwest::Client;
 
 use crate::{
     ServiceConnect,
-    modules::state_manager::{config::StateManagerConfig, errors::StateManagerErrors},
+    modules::state_manager::{
+        config::StateManagerConfig,
+        errors::StateManagerErrors,
+        models::{StateManagerResult, TaskState},
+    },
 };
 
 pub mod config;
 pub mod errors;
 pub mod models;
 pub mod webhook_manager;
+
+#[async_trait::async_trait]
+pub trait StateManager {
+    async fn create_task(&self, payload: TaskState) -> StateManagerResult<()>;
+    async fn cancel_task(&self, task_key: String) -> StateManagerResult<()>;
+}
 
 pub struct WebhookManager {
     config: Arc<StateManagerConfig>,

@@ -10,13 +10,14 @@ services:
     #   dockerfile: ../Dockerfile
     networks:
       - app-net
-    restart: always
+    restart: on-failure
     ports:
      - '10010:10010'
     env_file:
     - '.env.task-gateway'
   
   rabbitmq:
+    container_name: rabbitmq
     image: rabbitmq:management
     restart: on-failure
     networks:
@@ -38,3 +39,8 @@ services:
         limits:
           cpus: '3'
           memory: '6G'
+
+networks:
+  app-net:
+    name: app-net
+    driver: bridge

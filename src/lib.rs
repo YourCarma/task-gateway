@@ -1,5 +1,4 @@
 pub mod config;
-mod errors;
 pub mod logger;
 pub mod modules;
 pub mod server;
